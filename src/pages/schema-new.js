@@ -21,6 +21,15 @@ export function controller() {
     ctrl.onsubmit = function(e) {
         e.preventDefault();
 
+        if(/[cC]+arousels?/.test(ctrl.name)) {
+            ctrl.noCarousel = true;
+            m.redraw();
+
+            return;
+        }
+
+        ctrl.noCarousel = false;
+
         db.child("schemas/" + ctrl.slug).set({
             name    : ctrl.name,
             created : db.TIMESTAMP,
@@ -37,6 +46,7 @@ export function view(ctrl) {
         content : m("div", { class : layout.css.content },
             m("div", { class : layout.css.body },
                 m("h1", { class : layout.css.title }, "New Schema"),
+                ctrl.noCarousel ? m("h2", "NO CAROUSELS!") : null,
                 m("form", {
                         class    : css.form,
                         onsubmit : ctrl.onsubmit
