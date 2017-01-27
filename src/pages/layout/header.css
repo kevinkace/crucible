@@ -5,6 +5,7 @@
 @value color_bg: #2F343C;
 @value color_hover: #346;
 
+@value headHeight from "./layout.css";
 @value sm, md, lg from "../../shared.css";
 
 .header {
@@ -38,6 +39,20 @@
     background: color_hover;
 }
 
+.navToggle {
+    position: absolute;
+    right: 0;
+    width: headHeight;
+    height: headHeight;
+    padding: 0;
+    margin: 0;
+
+    font-size: 2em;
+    color: #FFF;
+    border: 0;
+    background: transparent;
+}
+
 .title {
     margin: 0;
 
@@ -55,6 +70,20 @@
     overflow-y: auto;
 
     font-size: 0.8em;
+
+    @media screen and (max-width: sm) {
+        position: absolute;
+        top: layout_css.headHeight;
+        height: 0;
+
+        background: color_bg;
+    }
+}
+
+.headerBdShow {
+    @media screen and (max-width: sm) {
+        height: auto;
+    }
 }
 
 .schemas {

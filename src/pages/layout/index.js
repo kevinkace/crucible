@@ -17,6 +17,7 @@ export function controller() {
 
     ctrl.schemas = null;
     ctrl.auth = auth();
+    ctrl.mobileNav = false;
 
     ctrl.add = function() {
         m.route(prefix("/content/new"));
@@ -62,7 +63,14 @@ export function view(ctrl, options) {
                 m("h1", { class : header.title }, title)
             ),
 
-            m("div", { class : header.headerBd },
+            m("button", {
+                onclick : () => {
+                    ctrl.mobileNav = !ctrl.mobileNav;
+                },
+                class : header.navToggle
+            }, "≡"),
+
+            m("div", { class : ctrl.mobileNav ? header.headerBdShow : header.headerBd },
                 ctrl.auth ? [
                     m("div", { class : header.schemas },
                         (ctrl.schemas || []).map(function(schema) {
