@@ -1,3 +1,5 @@
+@value sm, md, lg from "../shared.css";
+
 .container {
     composes: global(pure-g);
 
@@ -9,6 +11,14 @@
 
 .form {
     composes: global(pure-u), global(pure-form), global(pure-form-stacked);
+
+    @media screen and (max-width: sm) {
+        font-size: 1.3em;
+
+        input {
+            width: 100%;
+        }
+    }
 }
 
 .label {

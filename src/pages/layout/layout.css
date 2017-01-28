@@ -37,11 +37,20 @@ body {
 .contentWidth {
     max-width: 1170px;
     min-width: 720px;
+
+    @media screen and (max-width: sm) {
+        min-width: auto;
+    }
 }
 
 .textContentWidth {
     max-width: 850px;
     min-width: 550px;
+
+    @media screen and (max-width: sm) {
+        min-width: auto;
+        background: red;
+    }
 }
 
 .ellipsisOverflow {
