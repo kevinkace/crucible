@@ -1,13 +1,15 @@
 @value icons_css: "../icons.css";
 @value buttons_css: "../buttons.css";
 
+@value color_border from "../shared.css";
+
 @value radius: 2px;
 
 .container {
     display: flex;
     flex-direction: column;
     
-    border: 1px solid #CCC;
+    border: 1px solid color_border;
     border-radius: radius;
     
     padding: 10px;

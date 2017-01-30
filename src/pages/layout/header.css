@@ -40,6 +40,7 @@
 }
 
 .navToggle {
+    display: none;
     position: absolute;
     right: 0;
     width: headHeight;
@@ -51,6 +52,14 @@
     color: #FFF;
     border: 0;
     background: transparent;
+
+    @media screen and (max-width: sm) {
+        display: block;
+    }
+
+    &:focus {
+        outline: none;
+    }
 }
 
 .title {

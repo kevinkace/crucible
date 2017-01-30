@@ -379,7 +379,7 @@ export function view(ctrl) {
                             onclick : () => {
                                 ctrl.mobileMetas = !ctrl.mobileMetas;
                             }
-                        }, "▲"),
+                        }, ctrl.mobileMetas ? "▼" : "▲"),
                         m("div", {
                                 class : css.search
                             }, [

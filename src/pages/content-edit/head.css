@@ -5,6 +5,8 @@
 @value buttons_css: "../../buttons.css";
 @value header: "../layout/header.css";
 
+@value color_border from "../../shared.css";
+
 .contentHd {
     composes: head from layout_css;
     composes: lightSep from layout_css;
@@ -32,7 +34,7 @@
     padding: 20px;
     width: 75%;
 
-    border: 1px solid #CCC;
+    border: 1px solid color_border;
     border-top: 0;
     background: #FFF;
     text-align: left;

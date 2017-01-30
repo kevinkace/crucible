@@ -9,7 +9,7 @@
 @value iconTransition: color 0.2s ease-in;
 @value borderWidth: 3px;
 
-@value sm, md, lg from "../../shared.css";
+@value sm, md, lg, color_border from "../../shared.css";
 @value pad, color_background from layout_css;
 @value color_draft, color_scheduled, color_published, color_unpublished from "../content-edit/form.css";
 
@@ -21,6 +21,8 @@
 .contentBd {
     composes: body from layout_css;
     composes: contentWidth from layout_css;
+
+    overflow: hidden;
 }
 
 /* Meta layout */
@@ -124,9 +126,11 @@
     @media screen and (max-width: sm) {
         composes: padding from layout_css;
         position: absolute;
-        top: 100%;
+        bottom: 0;
         right: 0;
         left: 0;
+        height: 0;
+        padding: 0;
 
         background: color_background;
     }
@@ -136,24 +140,37 @@
     composes: metas;
 
     @media screen and (max-width: sm) {
-        bottom: 0;
-        top: auto;
+        height: auto;
+        padding: 1em pad;
+
+        border-top: solid 1px color_border;
+        box-shadow: 0 0 1.6em rgba(0, 0, 0, 0.1);
     }
 }
 
 .metasToggle {
+    display: none;
     position: absolute;
     bottom: 100%;
-    right: 0;
+    right: pad;
     width: 3em;
     height: 2em;
 
-    border: 0;
+    border: solid 1px color_border;
+    border-bottom: 0;
     border-radius: 0.4em;
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
 
     background: color_background;
+
+    @media screen and (max-width: sm) {
+        display: block;
+    }
+
+    &:focus {
+        outline: none;
+    }
 }
 
 .pages {
@@ -255,7 +272,7 @@
 
 .row {
     cursor: pointer;
-    border-bottom: solid 1px #CCC;
+    border-bottom: solid 1px color_border;
 
     transition: background-color 0.1s ease-in;
 }

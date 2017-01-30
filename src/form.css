@@ -1,7 +1,9 @@
+@value color_border from "./shared.css";
+
 .input {
     padding: 0.5em 0.6em;
     
-    border: 1px solid #CCC;
+    border: 1px solid color_border;
     box-shadow: inset 0 1px 3px #DDD;
     border-radius: 4px;
 }
