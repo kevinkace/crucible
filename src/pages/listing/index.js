@@ -77,6 +77,8 @@ export function controller() {
     ctrl.doOrderBlink = false;
     ctrl.loading = true;
 
+    ctrl.mobileMetas = false;
+
     // We need to check for an "overflowItem" to peek at
     // the next page's first item. This lets us grab the
     // next page's timestamp limit, or find we're on the last page.
@@ -155,7 +157,7 @@ export function controller() {
             orderByKey = window.localStorage.getItem("crucible:orderBy");
             ctrl.orderBy = orderOpts[orderByKey];
         }
-        
+
         if(!ctrl.orderBy) {
             ctrl.orderBy = defaultSort;
         }
@@ -371,7 +373,13 @@ export function view(ctrl) {
                     }, "Edit Schema") : null
                 ),
                 m("div", { class : css.contentBd }, [
-                    m("div", { class : css.metas },
+                    m("div", { class : ctrl.mobileMetas ? css.metasShow : css.metas },
+                        m("button", {
+                            class   : css.metasToggle,
+                            onclick : () => {
+                                ctrl.mobileMetas = !ctrl.mobileMetas;
+                            }
+                        }, "▲"),
                         m("div", {
                                 class : css.search
                             }, [
@@ -404,7 +412,7 @@ export function view(ctrl) {
                         (function() {
                             var hasMoreResults = (content.length >= INITIAL_SEARCH_CHUNK_SIZE),
                                 searchContents;
-                            
+
                             if(isSearchResults) {
                                 if(ctrl.searchMode === SEARCH_MODE_ALL) {
                                     searchContents = "Showing all results.";

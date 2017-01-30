@@ -10,7 +10,7 @@
 @value borderWidth: 3px;
 
 @value sm, md, lg from "../../shared.css";
-@value pad from layout_css;
+@value pad, color_background from layout_css;
 @value color_draft, color_scheduled, color_published, color_unpublished from "../content-edit/form.css";
 
 .contentHd {
@@ -49,17 +49,36 @@
     @media screen and (max-width: lg) {
         flex: 0 0 50%;
     }
+
+    @media screen and (max-width: sm) {
+        order: 3;
+    }
+}
+
+.manage {
+    @media screen and (max-width: sm) {
+        text-align: left;
+    }
 }
 
 /* Metadata controls */
 .search {
     position: relative;
     margin-bottom: 1em;
+
+    @media screen and (max-width: sm) {
+        flex: 0 0 100%;
+        order: 1;
+    }
 }
 
 .searchInput {
     width: 100%;
     padding: 5px;
+
+    @media screen and (max-width: sm) {
+        margin-bottom: 0 !important;
+    }
 }
 
 .searchClear {
@@ -85,6 +104,10 @@
 
 .itemsPerLabel {
     padding-left: 20px;
+
+    @media screen and (max-width: sm) {
+        padding-left: 0;
+    }
 }
 
 .itemsPer {
@@ -99,9 +122,38 @@
     padding-bottom: pad;
 
     @media screen and (max-width: sm) {
+        composes: padding from layout_css;
         position: absolute;
-        bottom: 0;
+        top: 100%;
+        right: 0;
+        left: 0;
+
+        background: color_background;
     }
+}
+
+.metasShow {
+    composes: metas;
+
+    @media screen and (max-width: sm) {
+        bottom: 0;
+        top: auto;
+    }
+}
+
+.metasToggle {
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    width: 3em;
+    height: 2em;
+
+    border: 0;
+    border-radius: 0.4em;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+
+    background: color_background;
 }
 
 .pages {
@@ -109,6 +161,14 @@
 
     @media screen and (max-width: lg) {
         font-size: 14px;
+    }
+
+    @media screen and (max-width: sm) {
+        margin-bottom: 1em;
+        flex: 0 0 100%;
+        display: flex;
+        justify-content: space-between;
+        order: 2;
     }
 }
 

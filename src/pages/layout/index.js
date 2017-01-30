@@ -64,10 +64,10 @@ export function view(ctrl, options) {
             ),
 
             m("button", {
+                class   : header.navToggle,
                 onclick : () => {
                     ctrl.mobileNav = !ctrl.mobileNav;
-                },
-                class : header.navToggle
+                }
             }, "≡"),
 
             m("div", { class : ctrl.mobileNav ? header.headerBdShow : header.headerBd },
