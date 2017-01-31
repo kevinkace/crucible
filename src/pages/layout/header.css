@@ -102,6 +102,10 @@
     margin: 0 0 2em;
 
     text-transform: uppercase;
+
+    @media screen and (max-width: sm) {
+        margin-bottom: 1em;
+    }
 }
 
 .link,

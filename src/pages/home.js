@@ -6,8 +6,9 @@ import css from "./layout/layout.css";
 
 export function view() {
     return m.component(layout, {
-        title   : "Home",
-        content : m("div", { class : css.content },
+        title     : "Home",
+        mobileNav : true,
+        content   : m("div", { class : css.content },
             m("div", { class : css.body },
                 m("ul",
                     m("li",

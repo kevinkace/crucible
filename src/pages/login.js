@@ -81,8 +81,9 @@ export function view(ctrl) {
     }
 
     return m.component(layout, {
-        title   : "Login",
-        content : m("div", { class : layout.css.content },
+        title     : "Login",
+        mobileNav : false,
+        content   : m("div", { class : layout.css.content },
             m("div", { class : layout.css.body },
                 m("form", { class : css.form, onsubmit : ctrl.onsubmit },
                     m("p",

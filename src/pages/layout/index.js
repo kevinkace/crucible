@@ -63,14 +63,20 @@ export function view(ctrl, options) {
                 m("h1", { class : header.title }, title)
             ),
 
-            m("button", {
-                class   : header.navToggle,
-                onclick : () => {
-                    ctrl.mobileNav = !ctrl.mobileNav;
-                }
-            }, "≡"),
+            options.mobileNav !== false ?
+                m("button", {
+                    class   : header.navToggle,
+                    onclick : () => {
+                        ctrl.mobileNav = !ctrl.mobileNav;
+                    }
+                }, "≡") :
+                null,
 
-            m("div", { class : ctrl.mobileNav ? header.headerBdShow : header.headerBd },
+            m("div", {
+                    class : ctrl.mobileNav || options.mobileNav ?
+                        header.headerBdShow :
+                        header.headerBd
+                },
                 ctrl.auth ? [
                     m("div", { class : header.schemas },
                         (ctrl.schemas || []).map(function(schema) {
