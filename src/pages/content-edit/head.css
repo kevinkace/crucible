@@ -5,7 +5,7 @@
 @value buttons_css: "../../buttons.css";
 @value header: "../layout/header.css";
 
-@value color_border from "../../shared.css";
+@value sm, md, lg, color_border from "../../shared.css";
 
 .contentHd {
     composes: head from layout_css;
@@ -55,6 +55,12 @@
 
 .headButton {
     margin-left: 10px;
+
+    @media screen and (max-width: sm) {
+        svg {
+            margin: 0;
+        }
+    }
 }
 
 .publishContainer,
@@ -85,6 +91,12 @@
     overflow: hidden;
     flex: 0 0 40%;
     justify-content: flex-start;
+}
+
+.mobileAction {
+    @media screen and (max-width: sm) {
+        display: none;
+    }
 }
 
 .publishing {
@@ -131,6 +143,10 @@
 
 .back svg {
     transform: rotate(180deg);
+
+    @media screen and (max-width: sm) {
+        margin: 0;
+    }
 }
 
 .start,

@@ -30,7 +30,7 @@ export function view(ctrl, options) {
                     m("svg", { class : css.icon },
                         m("use", { href : icons + "#arrow" })
                     ),
-                    "Back"
+                    m("span", { class : css.mobileAction }, "Back")
                 ),
 
                 m("button", {
@@ -47,7 +47,7 @@ export function view(ctrl, options) {
                     m("svg", { class : css.icon },
                         m("use", { href : icons + "#save" })
                     ),
-                    state.ui.saving ? "SAVING..." : "Save"
+                    m("span", { class : css.mobileAction }, state.ui.saving ? "SAVING..." : "Save")
                 )
             ]),
 
@@ -82,11 +82,11 @@ export function view(ctrl, options) {
                         m("svg", { class : css.icon },
                             m("use", { href : icons + "#publish" })
                         ),
-                        "Publish"
+                        m("span", { class : css.mobileAction }, "Publish" )
                     ),
-                    !state.form ?
-                        null :
-                        m.component(invalidMsg, { content : content }) 
+                    state.form ?
+                        m.component(invalidMsg, { content : content }) :
+                        null
                 ),
 
                 m("button", {
@@ -100,14 +100,14 @@ export function view(ctrl, options) {
                     m("svg", { class : css.icon },
                         m("use", { href : icons + "#remove" })
                     ),
-                    "Unpublish"
+                    m("span", { class : css.mobileAction }, "Unpublish")
                 )
             ),
 
             // Schedule Pop Up
-            !state.ui.schedule ?
-                null :
-                m.component(scheduleBox, options)
+            state.ui.schedule ?
+                m.component(scheduleBox, options) :
+                null
         )
     );
 }
