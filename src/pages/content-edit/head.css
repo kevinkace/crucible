@@ -30,7 +30,7 @@
     top: 42px;
     right: 0;
     z-index: 10; /* Ensure schedule box is above content. */
-    
+
     padding: 20px;
     width: 75%;
 
@@ -47,7 +47,7 @@
     0% {
         transform: scaleY(0);
     }
-    
+
     100% {
         transform: scaleY(1);
     }
@@ -57,19 +57,11 @@
     margin-left: 10px;
 }
 
-.actions {
-    overflow: hidden;
-}
-
 .publishContainer,
 .unpublish,
 .back,
 .save {
     max-width: 50%;
-}
-
-.actions {
-    flex: 0 0 40%;
 }
 
 .publishing {
@@ -89,12 +81,14 @@
     align-items: center;
 }
 
-.publishing {
-    justify-content: flex-end;
+.actions {
+    overflow: hidden;
+    flex: 0 0 40%;
+    justify-content: flex-start;
 }
 
-.actions {
-    justify-content: flex-start;
+.publishing {
+    justify-content: flex-end;
 }
 
 .save {
