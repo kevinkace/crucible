@@ -50,7 +50,6 @@ body {
 
     @media screen and (max-width: sm) {
         min-width: auto;
-        background: red;
     }
 }
 
