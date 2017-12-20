@@ -41,8 +41,7 @@
     }
 }
 
-.manage,
-.sort {
+.manage {
     flex: 0 0 40%;
     text-align: right;
 
@@ -54,12 +53,14 @@
 /* Metadata controls */
 .search {
     position: relative;
-    margin-bottom: 1em;
+    margin-bottom: 0.4em;
 }
 
 .searchInput {
     width: 100%;
     padding: 5px;
+
+    font-size: 0.9em;
 }
 
 .searchClear {
@@ -83,12 +84,40 @@
     transform: rotate(45deg);
 }
 
-.itemsPerLabel {
-    padding-left: 20px;
+.itemsPerContainer {
+    flex: 0 0 50%;
+
+    &:nth-child(2n) {
+        text-align: right;
+    }
 }
 
-.itemsPer {
-    max-width: 100px;
+.itemsPerLabel {
+    font-size: 0.8em;
+    color: #888;
+    border: solid 1px transparent; /* for alignment with input */
+}
+
+:global(.pure-form) .itemsPer {
+    max-width: 4em;
+    height: auto;
+    padding: 0.1em 0.3em !important;
+    margin-right: -24px;
+
+    background: none;
+    border-color: transparent !important;
+    box-shadow: none !important;
+    font-size: 0.8em;
+    color: #888;
+
+    &:hover {
+        border-color: #ccc !important;
+        box-shadow: inset 0 1px 3px #ddd !important;
+    }
+}
+
+:global(.pure-form) select.itemsPer {
+    max-width: 6.4em;
 }
 
 .metas {
@@ -100,11 +129,8 @@
 }
 
 .pages {
-    text-align: left;
-
-    @media screen and (max-width: lg) {
-        font-size: 14px;
-    }
+    text-align: right;
+    font-size: 0.9em;
 }
 
 .pages *:not(:first-child) {
@@ -196,7 +222,7 @@
 }
 
 .tableHeader {
-    font-size: 1.1em;
+    font-size: 0.9em;
 
     border-bottom: solid 1px #AAA;
     background: rgba(0, 0, 0, 0.025);
@@ -241,7 +267,7 @@
     border-left: solid borderWidth color_draft;
 
     color: anchor;
-    font-size: 1.2em;
+    font-size: 0.9em;
 }
 
 .itemNamePublished {

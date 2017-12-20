@@ -10,7 +10,7 @@
 .header {
     composes: vbox from flex_css;
     
-    flex: 0 1 320px;
+    flex: 0 1 256px;
     min-width: 180px;
     z-index: 1;
 
@@ -26,9 +26,6 @@
     composes: head from layout_css;
     composes: sep from layout_css;
 
-    /* specificify issue with head */
-    justify-content: space-around !important;
-
     font-size: 1.8em;
     text-decoration: none;
     color: inherit;
@@ -40,9 +37,13 @@
 
 .title {
     margin: 0;
+    padding-left: 34px;
 
-    font-size: 1.1em;
-    text-align: center;
+    font-size: 0.8em;
+    font-weight: normal;
+
+    background: url(https://www.gstatic.com/mobilesdk/160503_mobilesdk/logo/2x/firebase_28dp.png) no-repeat 0 50%;
+    background-size: 30px auto;
 }
 
 .headerBd {
@@ -95,7 +96,7 @@
 .schema {
     composes: link;
 
-    padding: 1em 24px 1em 16px;
+    padding: 1em 24px;
     opacity: 0.5;
 }
 

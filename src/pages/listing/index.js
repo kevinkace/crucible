@@ -393,6 +393,70 @@ export function view(ctrl) {
                             null
                         ]),
                         m("div", { class : css.manage },
+                            (function() {
+                                var hasMoreResults = (content.length >= INITIAL_SEARCH_CHUNK_SIZE),
+                                    searchContents;
+                                
+                                if(isSearchResults) {
+                                    if(ctrl.searchMode === SEARCH_MODE_ALL) {
+                                        searchContents = "Showing all results.";
+    
+                                    } else if(hasMoreResults) {
+                                        searchContents = [
+                                            "Showing most recent " + INITIAL_SEARCH_CHUNK_SIZE + " items... ",
+                                            m("button", {
+                                                    onclick : ctrl.searchAll.bind(ctrl),
+                                                    class   : css.nextPageF
+                                                },
+                                                "Search All"
+                                            )
+                                        ];
+                                    }
+    
+                                    return m("div", { class : css.showingResults },
+                                        searchContents
+                                    );
+                                }
+    
+                                return m("div", { class : css.pages }, [
+                                    m("button", {
+                                            onclick  : ctrl.prevPage.bind(ctrl),
+                                            class    : css.prevPage,
+                                            disabled : locked || ctrl.pg.page === 1 || null
+                                        },
+                                        "\< Prev Page"
+                                    ),
+                                    m("span", {
+                                            class : css.currPage
+                                        },
+                                        isSearchResults ? "-" : ctrl.pg.page
+                                    ),
+                                    m("button", {
+                                            onclick  : ctrl.nextPage.bind(ctrl),
+                                            class    : css.nextPage,
+                                            disabled : locked || ctrl.pg.page === ctrl.pg.numPages() || null
+                                        },
+                                        "Next Page \>"
+                                    )
+                                ]);
+                            }())
+                        ),
+                        m("div", { class : css.itemsPerContainer },
+                            m("span", { class : css.itemsPerLabel }, "Sort Items By: "),
+
+                            m("select", {
+                                    class    : css.itemsPer,
+                                    onchange : m.withAttr("value", ctrl.setOrderBy.bind(ctrl))
+                                },
+                                Object.keys(orderOpts).map(function(key) {
+                                    var selected = ctrl.orderBy.value === orderOpts[key].value;
+
+                                    return m("option", { value : key, selected : selected }, orderOpts[key].label);
+                                })
+                            )
+                        ),
+                        
+                        m("div", { class : css.itemsPerContainer },
                             m("span", { class : css.itemsPerLabel }, "Items Per Page: "),
                             m("input", {
                                 class : css.itemsPer,
@@ -403,67 +467,6 @@ export function view(ctrl) {
 
                                 onchange : m.withAttr("value", ctrl.setItemsPer)
                             })
-                        ),
-                        (function() {
-                            var hasMoreResults = (content.length >= INITIAL_SEARCH_CHUNK_SIZE),
-                                searchContents;
-                            
-                            if(isSearchResults) {
-                                if(ctrl.searchMode === SEARCH_MODE_ALL) {
-                                    searchContents = "Showing all results.";
-
-                                } else if(hasMoreResults) {
-                                    searchContents = [
-                                        "Showing most recent " + INITIAL_SEARCH_CHUNK_SIZE + " items... ",
-                                        m("button", {
-                                                onclick : ctrl.searchAll.bind(ctrl),
-                                                class   : css.nextPageF
-                                            },
-                                            "Search All"
-                                        )
-                                    ];
-                                }
-
-                                return m("div", { class : css.showingResults },
-                                    searchContents
-                                );
-                            }
-
-                            return m("div", { class : css.pages }, [
-                                m("button", {
-                                        onclick  : ctrl.prevPage.bind(ctrl),
-                                        class    : css.prevPage,
-                                        disabled : locked || ctrl.pg.page === 1 || null
-                                    },
-                                    "\< Prev Page"
-                                ),
-                                m("span", {
-                                        class : css.currPage
-                                    },
-                                    isSearchResults ? "-" : ctrl.pg.page
-                                ),
-                                m("button", {
-                                        onclick  : ctrl.nextPage.bind(ctrl),
-                                        class    : css.nextPage,
-                                        disabled : locked || ctrl.pg.page === ctrl.pg.numPages() || null
-                                    },
-                                    "Next Page \>"
-                                )
-                            ]);
-                        }()),
-                        m("div", { class : css.sort },
-                            "Sort Items By: ",
-
-                            m("select", {
-                                    class    : css.sortSelect,
-                                    onchange : m.withAttr("value", ctrl.setOrderBy.bind(ctrl))
-                                },
-                                Object.keys(orderOpts).map(function(key) {
-                                    var selected = ctrl.orderBy.value === orderOpts[key].value;
-
-                                    return m("option", { value : key, selected : selected }, orderOpts[key].label);
-                                })
-                            )
                         )
                     ),
                     m("div", { class : css.entriesContainer },

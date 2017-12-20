@@ -22,7 +22,7 @@ body {
 
 .content {
     composes: vbox from flex_css;
-    flex: 1 0 calc(100% - 320px);
+    flex: 1 0 calc(100% - 256px);
     position: relative;
 
     background: #FAFAFA;
