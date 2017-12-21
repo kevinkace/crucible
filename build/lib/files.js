@@ -4,7 +4,8 @@ var chokidar = require("chokidar"),
     shell    = require("shelljs"),
 
     files = {
-        "./src/pages/schema-edit/parse-schema.js" : "./gen/parse-schema.js"
+        "./src/pages/schema-edit/parse-schema.js" : "./gen/parse-schema.js",
+        "./src/favicon.ico" : "./gen/favicon.ico"
     };
 
 exports.watch = function() {
