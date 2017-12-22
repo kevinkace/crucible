@@ -1,0 +1,27 @@
+.body {
+    composes: body from "./layout/layout.css";
+
+    flex: 0 0 auto;
+}
+
+.content {
+    composes: content from "./layout/layout.css";
+
+    justify-content: center;
+    align-items: center;
+}
+
+.logo {
+    padding-left: 1em;
+
+    font-weight: 600;
+    font-size: 6em;
+
+    background: url(https://pbs.twimg.com/profile_images/733010550670557184/aMmM_m3g.jpg) no-repeat 0 50%;
+    background-size: 1em auto;
+
+    span {
+        font-size: 0.3em;
+        color: #C0C0C0;
+    }
+}
