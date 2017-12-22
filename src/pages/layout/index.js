@@ -18,10 +18,6 @@ export function controller() {
     ctrl.schemas = null;
     ctrl.auth = auth();
 
-    ctrl.add = function() {
-        m.route(prefix("/content/new"));
-    };
-
     db.child("schemas").on("value", function(snap) {
         ctrl.schemas = [];
 
@@ -82,14 +78,13 @@ export function view(ctrl, options) {
                         })
                     ),
 
-                    m("button", {
-                        // Attrs
-                        class    : header.add,
-                        disabled : locked || null,
-
-                        // Events
-                        onclick : ctrl.add
-                    }, "New Schema"),
+                    !config.locked ?
+                        m("a", {
+                            class  : header.add,
+                            href   : "/content/new",
+                            config : m.route
+                        }, "New Schema") :
+                        null,
 
                     m("a", {
                         class  : header.logout,

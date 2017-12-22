@@ -2,6 +2,7 @@
     composes: body from "./layout/layout.css";
 
     flex: 0 0 auto;
+    text-align: center;
 }
 
 .content {

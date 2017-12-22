@@ -98,7 +98,7 @@
     border: solid 1px transparent; /* for alignment with input */
 }
 
-:global(.pure-form) .itemsPer {
+.itemsPerContainer .itemsPer {
     max-width: 4em;
     height: auto;
     padding: 0.1em 0.3em !important;
@@ -116,7 +116,7 @@
     }
 }
 
-:global(.pure-form) select.itemsPer {
+.itemsPerContainer select.itemsPer {
     max-width: 6.4em;
 }
 
