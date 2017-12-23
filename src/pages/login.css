@@ -1,7 +1,5 @@
-.container {
-    composes: global(pure-g);
-
-    height: 50%;
+.body {
+    composes: body from "./layout/layout.css";
 
     align-items: center;
     justify-content: center;
@@ -9,10 +7,18 @@
 
 .form {
     composes: global(pure-u), global(pure-form), global(pure-form-stacked);
+
+    width: 400px;
+
+    input {
+        width: 100%;
+    }
 }
 
 .label {
-    font-weight: bold;
+    font-size: 0.9em;
+    color: #666;
+    text-transform: capitalize;
 }
 
 .button {
