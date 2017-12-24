@@ -43,28 +43,26 @@ function name(remote) {
 
 export default {
     oninit : function(vnode) {
-        var ctrl = this;
-        
         if(!vnode.attrs.field.ws) {
             console.error("No ws for upload field");
             // throw new Error("Must define a ws for upload fields");
         }
         
-        ctrl.id = id(vnode.attrs);
+        vnode.state.id = id(vnode.attrs);
         
         // Drag-n-drop state tracking
-        ctrl.dragging  = false;
-        ctrl.uploading = false;
+        vnode.state.dragging  = false;
+        vnode.state.uploading = false;
         
-        // Options caching
-        ctrl.options = vnode.attrs;
+        // attrs caching
+        vnode.state.attrs = vnode.attrs;
         
         if(vnode.attrs.data) {
             if(typeof vnode.attrs.data === "string") {
                 vnode.attrs.data = [ vnode.attrs.data ];
             }
             
-            ctrl.files = vnode.attrs.data.map(function(remote) {
+            vnode.state.files = vnode.attrs.data.map(function(remote) {
                 return {
                     name     : name(remote),
                     uploaded : true,
@@ -72,22 +70,22 @@ export default {
                 };
             });
         } else {
-            ctrl.files = [];
+            vnode.state.files = [];
         }
                 
         // Event handlers
-        ctrl.remove = function(idx, e) {
+        vnode.state.remove = function(idx, e) {
             e.preventDefault();
             
-            ctrl.files.splice(idx, 1);
+            vnode.state.files.splice(idx, 1);
             
-            ctrl._update();
+            vnode.state._update();
         };
         
-        ctrl.dragon = function(e) {
+        vnode.state.dragon = function(e) {
             e.preventDefault();
 
-            if(ctrl.dragging) {
+            if(vnode.state.dragging) {
                 vnode.redraw = false;
 
                 return;
@@ -95,27 +93,27 @@ export default {
             
             // Don't show this as a drag target if there's already something there
             // and it's not a multiple field
-            if(ctrl.files.length && !ctrl.options.field.multiple) {
+            if(vnode.state.files.length && !vnode.state.attrs.field.multiple) {
                 vnode.redraw = false;
                 
                 return;
             }
             
-            ctrl.dragging = true;
+            vnode.state.dragging = true;
         };
 
-        ctrl.dragoff = function() {
-            ctrl.dragging = false;
+        vnode.state.dragoff = function() {
+            vnode.state.dragging = false;
         };
 
-        ctrl.drop = function(e) {
+        vnode.state.drop = function(e) {
             var dropped;
             
-            ctrl.dragoff();
+            vnode.state.dragoff();
             e.preventDefault();
             
             // Must delete existing file before dragging on more
-            if(ctrl.files.length && !ctrl.options.field.multiple) {
+            if(vnode.state.files.length && !vnode.state.attrs.field.multiple) {
                 return;
             }
             
@@ -124,15 +122,15 @@ export default {
                 return file.type.indexOf("image/") === 0;
             });
             
-            if(ctrl.options.field.multiple) {
-                ctrl.files = ctrl.files.concat(dropped);
+            if(vnode.state.attrs.field.multiple) {
+                vnode.state.files = vnode.state.files.concat(dropped);
             } else {
-                ctrl.files = dropped.slice(-1);
+                vnode.state.files = dropped.slice(-1);
             }
             
             // Load all the images in parallel so we can show previews
             parallel(
-                ctrl.files
+                vnode.state.files
                 .filter(function(file) {
                     return !file.uploaded;
                 })
@@ -157,28 +155,28 @@ export default {
                     
                     m.redraw();
                     
-                    return ctrl._upload();
+                    return vnode.state._upload();
                 }
             );
         };
         
         // Update w/ the result, but removing anything that hasn't been uploaded
-        ctrl._update = function() {
-            var files = ctrl.files.filter(function(file) {
+        vnode.state._update = function() {
+            var files = vnode.state.files.filter(function(file) {
                     return file.uploaded && file.remote;
                 }).map(function(file) {
                     return file.remote;
                 });
             
-            ctrl.options.update(
-                ctrl.options.path,
-                ctrl.options.field.multiple ? files : files[0]
+            vnode.state.attrs.update(
+                vnode.state.attrs.path,
+                vnode.state.attrs.field.multiple ? files : files[0]
             );
         };
         
         // Upload any files that haven't been uploaded yet
-        ctrl._upload = function() {
-            var files = ctrl.files.filter(function(file) {
+        vnode.state._upload = function() {
+            var files = vnode.state.files.filter(function(file) {
                     return !file.uploaded && !file.uploading;
                 });
             
@@ -186,7 +184,7 @@ export default {
                 return;
             }
             
-            fetch(ctrl.options.field.ws)
+            fetch(vnode.state.attrs.field.ws)
             .then(checkStatus)
             .then(function(response) {
                 return response.json();
@@ -209,7 +207,7 @@ export default {
                         
                         data.append("Content-Type", file.type);
                         
-                        each(ctrl.options.field.headers || {}, function(value, key) {
+                        each(vnode.state.attrs.field.headers || {}, function(value, key) {
                             data.append(key, value);
                         });
                         
@@ -235,7 +233,7 @@ export default {
                     })
                 );
             })
-            .then(ctrl._update)
+            .then(vnode.state._update)
             .catch(function(error) {
                 // TODO: error-handling
                 console.error(error);
@@ -246,7 +244,7 @@ export default {
     view : function(vnode) {
         var field  = vnode.attrs.field;
         
-        vnode.state.options = vnode.attrs;
+        vnode.state.attrs = vnode.attrs;
 
         return m("div", { class : vnode.attrs.class },
             label(vnode.state, vnode.attrs),

@@ -5,20 +5,18 @@ import * as children from "./children";
 import css from "./tabs.css";
 
 export default {
-    oninit : function() {
-        var ctrl = this;
+    oninit : function(vnode) {
+        vnode.state.tab = 0;
 
-        ctrl.tab = 0;
-
-        ctrl.switchtab = function(tab, e) {
+        vnode.state.switchtab = function(tab, e) {
             e.preventDefault();
 
-            ctrl.tab = tab;
+            vnode.state.tab = tab;
         };
     },
 
     view : function(vnode) {
-        var tabs   = vnode.attrs.field.children || [];
+        var tabs = vnode.attrs.field.children || [];
         
         return m("div", { class : vnode.attrs.class },
             m("div", { class : css.nav },

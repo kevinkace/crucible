@@ -8,39 +8,37 @@ import * as children from "./children";
 
 import css from "./repeating.css";
 
-function child(vnode, data, idx) {
+function child(state, attrs, data, idx) {
     return m("div", { class : css[idx === 0 ? "first" : "child"] },
         m("div", { class : css.meta },
             m("p", { class : css.counter }, idx + 1),
             m("button", {
                     class   : css.remove,
-                    onclick : vnode.state.remove.bind(null, vnode.attrs, data, idx)
+                    onclick : state.remove.bind(null, attrs, data, idx)
                 },
                 m.trust(removeIcon)
             )
         ),
-        m(children, assign({}, vnode.attrs, {
-            fields : vnode.attrs.field.children,
+        m(children, assign({}, attrs, {
+            fields : attrs.field.children,
             class  : css.fields,
             data   : data,
-            path   : vnode.attrs.path.concat(idx)
+            path   : attrs.path.concat(idx)
         }))
     );
 }
 
 export default {
     oninit : function(vnode) {
-        var ctrl = this;
+        vnode.state.children = (vnode.attrs.data && vnode.attrs.data.length) || 1;
         
-        ctrl.children = (vnode.attrs.data && vnode.attrs.data.length) || 1;
-        
-        ctrl.add = function(opts, e) {
+        vnode.state.add = function(opts, e) {
             e.preventDefault();
             
-            ctrl.children += 1;
+            vnode.state.children += 1;
 
             // Ensure that we have data placeholders for all the possible entries
-            times(ctrl.children, function(idx) {
+            times(vnode.state.children, function(idx) {
                 if(opts.data && opts.data[idx]) {
                     return;
                 }
@@ -51,15 +49,15 @@ export default {
             });
         };
 
-        ctrl.remove = function(opts, data, idx, e) {
+        vnode.state.remove = function(opts, data, idx, e) {
             e.preventDefault();
             
             if(Array.isArray(opts.data)) {
                 opts.data.splice(idx, 1);
                 
-                ctrl.children = opts.data.length;
+                vnode.state.children = opts.data.length;
             } else {
-                --ctrl.children;
+                --vnode.state.children;
             }
             
             opts.update(opts.path, opts.data);

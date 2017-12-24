@@ -24,6 +24,7 @@ export default multiple({
 
                     // events
                     onchange : m.withAttr("checked", function(state) {
+                        // attrs?
                         vnode.state.value(vnode.attrs, opt.key, state && opt.value);
                     })
                 }),

@@ -1,5 +1,5 @@
-export default function(options) {
-    return options.path.length ?
-        options.path.join("-") :
-        options.details.key;
+export default function(attrs) {
+    return attrs.path.length ?
+        attrs.path.join("-") :
+        attrs.details.key;
 }

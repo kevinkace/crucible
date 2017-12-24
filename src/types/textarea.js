@@ -8,15 +8,13 @@ import css from "./textarea.css";
 
 export default {
     oninit : function(vnode) {
-        var ctrl = this;
+        vnode.state.id   = id(vnode.attrs);
+        vnode.state.text = vnode.attrs.data || "";
 
-        ctrl.id   = id(vnode.attrs);
-        ctrl.text = vnode.attrs.data || "";
-
-        ctrl.resize = function(opt, value) {
+        vnode.state.resize = function(opt, value) {
             opt.update(opt.path, value);
 
-            ctrl.text = value;
+            vnode.state.text = value;
         };
     },
 

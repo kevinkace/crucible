@@ -14,60 +14,59 @@ import css from "./relationship.css";
 
 export default {
     oninit : function(vnode) {
-        var ctrl    = this,
-            schema  = vnode.attrs.field.schema,
+        var schema  = vnode.attrs.field.schema,
             content = db.child("content/" + schema);
 
-        ctrl.id      = id(vnode.attrs);
-        ctrl.lookup  = null;
-        ctrl.handle  = null;
-        ctrl.related = null;
-        ctrl.names   = [];
-        ctrl.baseUrl = "content/" + schema + "/";
+        vnode.state.id      = id(vnode.attrs);
+        vnode.state.lookup  = null;
+        vnode.state.handle  = null;
+        vnode.state.related = null;
+        vnode.state.names   = [];
+        vnode.state.baseUrl = "content/" + schema + "/";
 
-        ctrl.options = vnode.attrs;
+        vnode.state.attrs = vnode.attrs;
 
-        ctrl.config = function(el, init) {
+        vnode.state.config = function(el, init) {
             if(init) {
                 return;
             }
 
-            ctrl.autocomplete = new Awesomeplete(el, {
+            vnode.state.autocomplete = new Awesomeplete(el, {
                 minChars  : 3,
                 maxItems  : 10,
                 autoFirst : true
             });
 
-            ctrl.input = el;
+            vnode.state.input = el;
 
-            el.addEventListener("awesomplete-selectcomplete", ctrl.add);
+            el.addEventListener("awesomplete-selectcomplete", vnode.state.add);
 
-            ctrl.autocomplete.list = ctrl.names;
+            vnode.state.autocomplete.list = vnode.state.names;
 
-            ctrl.load();
+            vnode.state.load();
         };
 
-        ctrl.load = function() {
-            if(ctrl.handle) {
+        vnode.state.load = function() {
+            if(vnode.state.handle) {
                 return;
             }
 
-            ctrl.handle = content.on("value", function(snap) {
-                ctrl.lookup  = {};
-                ctrl.related = snap.val();
-                ctrl.names   = [];
+            vnode.state.handle = content.on("value", function(snap) {
+                vnode.state.lookup  = {};
+                vnode.state.related = snap.val();
+                vnode.state.names   = [];
 
                 snap.forEach(function(details) {
                     var val = details.val();
 
-                    ctrl.names.push(val.name);
+                    vnode.state.names.push(val.name);
 
-                    ctrl.lookup[val.name] = details.key();
+                    vnode.state.lookup[val.name] = details.key();
                 });
 
-                if(ctrl.autocomplete) {
-                    ctrl.autocomplete.list = ctrl.names;
-                    ctrl.autocomplete.evaluate();
+                if(vnode.state.autocomplete) {
+                    vnode.state.autocomplete.list = vnode.state.names;
+                    vnode.state.autocomplete.evaluate();
                 }
 
                 m.redraw();
@@ -75,8 +74,8 @@ export default {
         };
 
         // Set up a two-way relationship between these
-        ctrl.add = function(e) {
-            var key = ctrl.lookup[e.target.value];
+        vnode.state.add = function(e) {
+            var key = vnode.state.lookup[e.target.value];
 
             if(!key) {
                 console.error(e.target.value);
@@ -86,33 +85,33 @@ export default {
 
             e.target.value = "";
 
-            ctrl.options.update(ctrl.options.path.concat(key), true);
+            vnode.state.attrs.update(vnode.state.attrs.path.concat(key), true);
 
-            if(ctrl.options.root) {
-                content.child(key + "/relationships/" + ctrl.options.root.key()).set(true);
+            if(vnode.state.attrs.root) {
+                content.child(key + "/relationships/" + vnode.state.attrs.root.key()).set(true);
             }
         };
 
         // BREAK THE RELATIONSHIP
-        ctrl.remove = function(key, e) {
+        vnode.state.remove = function(key, e) {
             e.preventDefault();
 
-            ctrl.options.update(ctrl.options.path.concat(key));
+            vnode.state.attrs.update(vnode.state.attrs.path.concat(key));
 
-            if(ctrl.options.root) {
-                content.child(key + "/relationships/" + ctrl.options.root.key()).remove();
+            if(vnode.state.attrs.root) {
+                content.child(key + "/relationships/" + vnode.state.attrs.root.key()).remove();
             }
         };
 
         if(vnode.attrs.data) {
-            ctrl.load();
+            vnode.state.load();
         }
     },
 
     view : function(vnode) {
         var field  = vnode.attrs.field;
 
-        vnode.state.options = vnode.attrs;
+        vnode.state.attrs = vnode.attrs;
 
         return m("div", { class : vnode.attrs.class },
             label(vnode.state, vnode.attrs),

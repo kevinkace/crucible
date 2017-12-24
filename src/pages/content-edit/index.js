@@ -17,10 +17,8 @@ import Content from "./content-state.js";
 
 import css from "./form.css";
 
-export function controller() {
-    var ctrl = this,
-
-        id     = m.route.param("id"),
+export function oninit(vnode) {
+    var id     = m.route.param("id"),
         schema = db.child("schemas/" + m.route.param("schema")),
         ref    = db.child("content/" + m.route.param("schema") + "/" + id),
 
@@ -30,15 +28,15 @@ export function controller() {
     schema.off();
     ref.off();
 
-    ctrl.id     = id;
-    ctrl.ref    = ref;
-    ctrl.form   = null;
-    ctrl.data   = {};
-    ctrl.hidden = [];
-    ctrl.loading = true;
+    vnode.state.id     = id;
+    vnode.state.ref    = ref;
+    vnode.state.form   = null;
+    vnode.state.data   = {};
+    vnode.state.hidden = [];
+    vnode.state.loading = true;
 
     // New state for every page change.
-    ctrl.content = content = new Content();
+    vnode.state.content = content = new Content();
 
     // No sense doing any work if we don't have an id to operate on
     if(!id) {
@@ -64,11 +62,11 @@ export function controller() {
 
         content.processServerData(data, ref);
 
-        ctrl.data = assign(data, {
+        vnode.state.data = assign(data, {
             fields : merge(data.fields, state.fields)
         });
 
-        ctrl.loading = false;
+        vnode.state.loading = false;
 
         return m.redraw();
     });
@@ -76,8 +74,8 @@ export function controller() {
     watch(ref);
 }
 
-export function view(ctrl) {
-    var state = ctrl.content.get(),
+export function view(vnode) {
+    var state = vnode.state.content.get(),
         title;
 
     if(!state.schema) {
@@ -89,17 +87,17 @@ export function view(ctrl) {
         .map(capitalize)
         .join(" | ");
 
-    if(!ctrl.id) {
+    if(!vnode.state.id) {
         m.route(prefix("/listing/" + state.schema.key));
     }
 
     return m.component(layout, {
         title   : title,
-        loading : ctrl.loading,
+        loading : vnode.state.loading,
         content : [
             m("div", { class : layout.css.content },
-                m.component(head,     { content : ctrl.content }),
-                m.component(formView, { content : ctrl.content })
+                m.component(head,     { content : vnode.state.content }),
+                m.component(formView, { content : vnode.state.content })
             )
         ]
     });

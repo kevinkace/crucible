@@ -15,10 +15,7 @@ function loginRedirect() {
         window.encodeURIComponent(join(window.location.origin, root, "/login"));
 }
 
-export function controller() {
-    /* eslint consistent-return: off */
-    var ctrl = this;
-
+export function oninit(vnode) {
     if(config.auth === "jwt") {
         if(!m.route.param("auth")) {
             return loginRedirect();
@@ -39,7 +36,7 @@ export function controller() {
         return m.route.set(prefix("/"));
     }
 
-    ctrl.onsubmit = function(e) {
+    vnode.state.onsubmit = function(e) {
         var form = e.target.elements;
 
         e.preventDefault();
@@ -49,7 +46,7 @@ export function controller() {
             password : form.password.value
         }, function(error) {
             if(error) {
-                ctrl.error = error.message;
+                vnode.state.error = error.message;
 
                 return m.redraw();
             }

@@ -16,48 +16,47 @@ import parse from "./parse-schema.js";
 import css from "./schema-edit.css";
 import flexCss from "../../flex.css";
 
-export function controller() {
-    var ctrl   = this,
-        id     = m.route.param("schema"),
+export function oninit(vnode) {
+    var id     = m.route.param("schema"),
         ref    = db.child("schemas/" + id),
         worker = new Worker(parse);
 
-    ctrl.ref     = ref;
-    ctrl.schema  = null;
-    ctrl.worker  = worker;
-    ctrl.data    = {};
-    ctrl.preview = {
+    vnode.state.ref     = ref;
+    vnode.state.schema  = null;
+    vnode.state.worker  = worker;
+    vnode.state.data    = {};
+    vnode.state.preview = {
         valid : true,
         value : ""
     };
 
     // Get Firebase data
     ref.on("value", function(snap) {
-        ctrl.schema = snap.val();
+        vnode.state.schema = snap.val();
 
-        if(!ctrl.preview.value) {
-            ctrl.preview.value = ctrl.schema.preview || "";
+        if(!vnode.state.preview.value) {
+            vnode.state.preview.value = vnode.state.schema.preview || "";
         }
 
         // Ensure that we run it through the worker asap
-        if(ctrl.schema.source) {
-            worker.postMessage(ctrl.schema.source);
+        if(vnode.state.schema.source) {
+            worker.postMessage(vnode.state.schema.source);
         }
 
         m.redraw();
     });
 
     // Event Handlers
-    ctrl.previewChanged = function(e) {
+    vnode.state.previewChanged = function(e) {
         var el = e.target;
 
-        ctrl.preview.valid = el.validity.valid;
-        ctrl.preview.value = el.value;
+        vnode.state.preview.valid = el.validity.valid;
+        vnode.state.preview.value = el.value;
 
         ref.child("preview").set(el.value);
     };
 
-    ctrl.slugChanged = function(value) {
+    vnode.state.slugChanged = function(value) {
         ref.child("slug").set(value);
     };
 
@@ -66,10 +65,10 @@ export function controller() {
         var data = JSON.parse(e.data);
 
         if(data.error) {
-            ctrl.error = true;
+            vnode.state.error = true;
         } else {
             ref.child("fields").set(data.config);
-            ctrl.error = false;
+            vnode.state.error = false;
         }
 
         m.redraw();
@@ -78,23 +77,23 @@ export function controller() {
     watch(ref);
 }
 
-export function view(ctrl) {
+export function view(vnode) {
     var content = new Content(),
         state   = content.get();
 
-    if(!ctrl.schema) {
+    if(!vnode.state.schema) {
         return m.component(layout, { loading : true });
     }
 
     return m.component(layout, {
-        title   : "Edit Schema: " + capitalize(ctrl.schema.name),
+        title   : "Edit Schema: " + capitalize(vnode.state.schema.name),
         content : m("div", { class : layout.css.content },
-            ctrl.error ?
-                m("p", { class : css.error }, ctrl.error) :
+            vnode.state.error ?
+                m("p", { class : css.error }, vnode.state.error) :
                 null,
 
             m("div", { class : layout.css.body },
-                m("h1", { class : css.title }, "Edit Schema: " + capitalize(ctrl.schema.name)),
+                m("h1", { class : css.title }, "Edit Schema: " + capitalize(vnode.state.schema.name)),
 
                 m("div", { class : css.contentWidth },
 
@@ -102,9 +101,9 @@ export function view(ctrl) {
                         m("h2", "Field Definitions"),
                         m("div", { class : css.editor },
                             m.component(editor, {
-                                ref    : ctrl.ref,
-                                worker : ctrl.worker,
-                                source : ctrl.schema.source || "{\n\n}"
+                                ref    : vnode.state.ref,
+                                worker : vnode.state.worker,
+                                source : vnode.state.schema.source || "{\n\n}"
                             })
                         )
                     ),
@@ -113,7 +112,7 @@ export function view(ctrl) {
                         m("h2", "Preview"),
                         m("div", { class : css.fields },
                             m.component(children, {
-                                fields : ctrl.schema.fields,
+                                fields : vnode.state.schema.fields,
                                 class  : css.children,
                                 data   : state.fields || {},
                                 path   : [ "fields" ],
@@ -135,10 +134,10 @@ export function view(ctrl) {
                                 // Attrs
                                 class   : css.slug,
                                 type    : "checkbox",
-                                checked : ctrl.schema.slug,
+                                checked : vnode.state.schema.slug,
 
                                 // Events
-                                onchange : m.withAttr("checked", ctrl.slugChanged)
+                                onchange : m.withAttr("checked", vnode.state.slugChanged)
                             })
                         ),
                         m("div", { class : css.urlBase },
@@ -147,12 +146,12 @@ export function view(ctrl) {
                                 m("input", {
                                     // Attrs
                                     id    : "preview",
-                                    class : css[ctrl.preview.valid ? "urlInputPreview" : "urlInputError"],
+                                    class : css[vnode.state.preview.valid ? "urlInputPreview" : "urlInputError"],
                                     type  : "url",
-                                    value : ctrl.preview.value || "",
+                                    value : vnode.state.preview.value || "",
 
                                     // Events
-                                    oninput : ctrl.previewChanged,
+                                    oninput : vnode.state.previewChanged,
 
                                     // Config Fn
                                     config : function(el, init) {
@@ -160,12 +159,12 @@ export function view(ctrl) {
                                             return;
                                         }
 
-                                        ctrl.preview.valid = el.validity.valid;
+                                        vnode.state.preview.valid = el.validity.valid;
                                     }
                                 }),
                                 m("p", { class : css.previewUrl },
-                                    ctrl.preview.value ?
-                                        ctrl.preview.value + "-0IhUBgUFfhyLQ2m6s5x" :
+                                    vnode.state.preview.value ?
+                                        vnode.state.preview.value + "-0IhUBgUFfhyLQ2m6s5x" :
                                         null
                                 )
                             )

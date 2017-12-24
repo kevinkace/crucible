@@ -62,7 +62,7 @@
     "lodash.unset": "^4.5.2",
     "mime-types": "^2.1.15",
     "minimist": "^1.2.0",
-    "mithril": "^0.2.0",
+    "mithril": "^1.1.6",
     "mithril-objectify": "^3.1.0",
     "mithril-query": "0.9.3",
     "mocha": "^3.1.2",

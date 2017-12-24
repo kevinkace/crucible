@@ -60,25 +60,24 @@ function contentFromSnapshot(snap, orderBy, removeOverflow) {
     return content;
 }
 
-export function controller() {
-    var ctrl = this,
-        defaultSort = orderOpts.updated,
+export function oninit(vnode) {
+    var defaultSort = orderOpts.updated,
         orderByKey,
         schema;
 
-    ctrl.schema  = null;
-    ctrl.content = null;
-    ctrl.results = null;
+    vnode.state.schema  = null;
+    vnode.state.content = null;
+    vnode.state.results = null;
 
-    ctrl.contentLoc = null;
-    ctrl.queryRef   = null;
+    vnode.state.contentLoc = null;
+    vnode.state.queryRef   = null;
 
-    ctrl.searchInput = null;
-    ctrl.searchMode  = SEARCH_MODE_RECENT;
+    vnode.state.searchInput = null;
+    vnode.state.searchMode  = SEARCH_MODE_RECENT;
 
-    ctrl.orderBy = null;
-    ctrl.doOrderBlink = false;
-    ctrl.loading = true;
+    vnode.state.orderBy = null;
+    vnode.state.doOrderBlink = false;
+    vnode.state.loading = true;
 
     // We need to check for an "overflowItem" to peek at
     // the next page's first item. This lets us grab the
@@ -86,42 +85,42 @@ export function controller() {
     function onNext(snap) {
         var snapVal = snap.val(),
             recordCt    = Object.keys(snapVal || {}).length,
-            isLastPage  = recordCt <= ctrl.pg.itemsPer,
-            hasOverflow = !isLastPage && recordCt === ctrl.pg.itemsPer + 1,
+            isLastPage  = recordCt <= vnode.state.pg.itemsPer,
+            hasOverflow = !isLastPage && recordCt === vnode.state.pg.itemsPer + 1,
 
             oldestTs = Number.MAX_SAFE_INTEGER,
             content  = [],
             overflow;
 
         if(!snapVal) {
-            ctrl.loading = false;
+            vnode.state.loading = false;
 
             return;
         }
 
         snap.forEach(function(record) {
-            var item = contentFromRecord(record, ctrl.orderBy);
+            var item = contentFromRecord(record, vnode.state.orderBy);
 
             oldestTs = (item.order_by < oldestTs) ? item.order_by : oldestTs;
             content.push(item);
         });
 
         overflow = (hasOverflow) ? content.splice(0, 1)[0] : null;
-        ctrl.content = content;
+        vnode.state.content = content;
 
         if(!isLastPage && overflow) {
-            ctrl.pg.limits.push(oldestTs);
+            vnode.state.pg.limits.push(oldestTs);
         }
     }
 
     // When we go backward, or return to a page we've already
     // loaded, there's very little work to be done.
     function onPageReturn(snap) {
-        ctrl.content = contentFromSnapshot(snap, ctrl.orderBy, true);
+        vnode.state.content = contentFromSnapshot(snap, vnode.state.orderBy, true);
     }
 
     function onValue(snap) {
-        var wentPrev = Boolean(ctrl.pg.nextPageTs());
+        var wentPrev = Boolean(vnode.state.pg.nextPageTs());
 
         if(wentPrev) {
             onPageReturn.call(this, snap);
@@ -129,7 +128,7 @@ export function controller() {
             onNext.call(this, snap);
         }
 
-        ctrl.loading = false;
+        vnode.state.loading = false;
 
         m.redraw();
     }
@@ -138,74 +137,74 @@ export function controller() {
         if(!snap.exists()) {
             console.error("Error retrieving schema snapshot from Firebase.");
 
-            ctrl.loading = false;
+            vnode.state.loading = false;
 
             return;
         }
 
-        ctrl.schema = snap.val();
-        ctrl.schema.key = snap.key();
-        ctrl.contentLoc = db.child("content/" + ctrl.schema.key);
+        vnode.state.schema = snap.val();
+        vnode.state.schema.key = snap.key();
+        vnode.state.contentLoc = db.child("content/" + vnode.state.schema.key);
 
-        ctrl.showPage();
+        vnode.state.showPage();
     }
 
     // Go get initial data
-    ctrl.init = function() {
-        ctrl.pg = new PageState();
+    vnode.state.init = function() {
+        vnode.state.pg = new PageState();
 
         if(window.localStorage) {
             orderByKey = window.localStorage.getItem("crucible:orderBy");
-            ctrl.orderBy = orderOpts[orderByKey];
+            vnode.state.orderBy = orderOpts[orderByKey];
         }
         
-        if(!ctrl.orderBy) {
-            ctrl.orderBy = defaultSort;
+        if(!vnode.state.orderBy) {
+            vnode.state.orderBy = defaultSort;
         }
 
         schema = db.child("schemas/" + m.route.param("schema"));
         schema.on("value", onSchema);
     };
 
-    ctrl.setItemsPer = function(val) {
+    vnode.state.setItemsPer = function(val) {
         var num = parseInt(val, 10);
 
         if(isNaN(num)) {
             return;
         }
 
-        ctrl.pg.setItemsPer(num);
-        ctrl.showPage();
+        vnode.state.pg.setItemsPer(num);
+        vnode.state.showPage();
     };
 
-    ctrl.nextPage = function() {
-        ctrl.pg.next();
-        ctrl.showPage();
+    vnode.state.nextPage = function() {
+        vnode.state.pg.next();
+        vnode.state.showPage();
     };
 
-    ctrl.prevPage = function() {
-        ctrl.pg.prev();
-        ctrl.showPage();
+    vnode.state.prevPage = function() {
+        vnode.state.pg.prev();
+        vnode.state.showPage();
     };
 
-    ctrl.showPage = function() {
+    vnode.state.showPage = function() {
         var overflowItem = 1,
-            pageTs = ctrl.pg.currPageTs(),
-            nextTs = ctrl.pg.nextPageTs();
+            pageTs = vnode.state.pg.currPageTs(),
+            nextTs = vnode.state.pg.nextPageTs();
 
-        if(ctrl.queryRef) {
-            ctrl.queryRef.off();
+        if(vnode.state.queryRef) {
+            vnode.state.queryRef.off();
         }
 
         if(nextTs) {
             // This is safer in the case that firebase updates
             // because of another user's acitvity.
-            ctrl.queryRef = ctrl.contentLoc
-                .orderByChild(ctrl.orderBy.value)
+            vnode.state.queryRef = vnode.state.contentLoc
+                .orderByChild(vnode.state.orderBy.value)
                 .startAt(nextTs)
                 .endAt(pageTs);
 
-            ctrl.queryRef.on("value", onValue);
+            vnode.state.queryRef.on("value", onValue);
 
             return;
         }
@@ -214,43 +213,43 @@ export function controller() {
         // lowest/oldest entry will be first in the snapshot.
         // We want items in descneding, so we slice our
         // query from the other end via .endAt/.limitToLast
-        ctrl.queryRef = ctrl.contentLoc
-            .orderByChild(ctrl.orderBy.value)
-            .endAt(ctrl.pg.limits[ctrl.pg.page])
-            .limitToLast(ctrl.pg.itemsPer + overflowItem);
+        vnode.state.queryRef = vnode.state.contentLoc
+            .orderByChild(vnode.state.orderBy.value)
+            .endAt(vnode.state.pg.limits[vnode.state.pg.page])
+            .limitToLast(vnode.state.pg.itemsPer + overflowItem);
 
-        ctrl.queryRef.on("value", onValue);
+        vnode.state.queryRef.on("value", onValue);
     };
 
-    ctrl.setOrderBy = function(optKey) {
-        ctrl.orderBy = orderOpts[optKey];
+    vnode.state.setOrderBy = function(optKey) {
+        vnode.state.orderBy = orderOpts[optKey];
         window.localStorage.setItem("crucible:orderBy", optKey);
 
-        ctrl.pg = new PageState();
-        ctrl.doOrderBlink = true;
-        ctrl.showPage();
+        vnode.state.pg = new PageState();
+        vnode.state.doOrderBlink = true;
+        vnode.state.showPage();
     };
 
 
     // Event handlers
-    ctrl.add = function() {
+    vnode.state.add = function() {
         var result;
 
-        result = db.child("content/" + ctrl.schema.key).push({
+        result = db.child("content/" + vnode.state.schema.key).push({
             created_at : db.TIMESTAMP,
             created_by : db.getAuth().uid
         });
 
-        m.route(prefix("/content/" + ctrl.schema.key + "/" + result.key()));
+        m.route(prefix("/content/" + vnode.state.schema.key + "/" + result.key()));
     };
 
-    ctrl.remove = function(data, e) {
+    vnode.state.remove = function(data, e) {
         var ref;
 
         e.stopPropagation();
 
         ref = db.child("content")
-            .child(ctrl.schema.key)
+            .child(vnode.state.schema.key)
             .child(data.key);
 
         ref.off(); // Ensure we don't have lingering listeners.
@@ -260,115 +259,115 @@ export function controller() {
         }
     };
 
-    ctrl.change = function(page, e) {
+    vnode.state.change = function(page, e) {
         e.preventDefault();
 
-        ctrl.page = page;
+        vnode.state.page = page;
     };
 
 
     // m.redraw calls are necessary due to debouncing, this function
     // may not be executing during a planned redraw cycle
     function onSearchResults(searchStr, snap) {
-        var contents = contentFromSnapshot(snap, ctrl.orderBy);
+        var contents = contentFromSnapshot(snap, vnode.state.orderBy);
 
-        ctrl.results = contents.filter(function(content) {
+        vnode.state.results = contents.filter(function(content) {
             return fuzzy(searchStr, content.search);
         });
 
         return m.redraw();
     }
 
-    ctrl.registerSearchInput = function(el) {
-        ctrl.searchInput = el;
+    vnode.state.registerSearchInput = function(el) {
+        vnode.state.searchInput = el;
     };
 
-    ctrl.searchFor = debounce(function(input) {
-        ctrl.searchMode = SEARCH_MODE_RECENT;
+    vnode.state.searchFor = debounce(function(input) {
+        vnode.state.searchMode = SEARCH_MODE_RECENT;
 
         if(input.length < 2) {
-            ctrl.results = false;
+            vnode.state.results = false;
 
             return m.redraw();
         }
 
         input = slug(input);
-        ctrl.getSearchResults(input);
+        vnode.state.getSearchResults(input);
 
         return null;
     }, 800);
 
 
-    ctrl.getSearchResults = function(searchStr) {
-        if(ctrl.queryRef) {
-            ctrl.queryRef.off();
+    vnode.state.getSearchResults = function(searchStr) {
+        if(vnode.state.queryRef) {
+            vnode.state.queryRef.off();
         }
 
-        ctrl.queryRef = ctrl.contentLoc
+        vnode.state.queryRef = vnode.state.contentLoc
             .orderByChild(orderOpts.updated.value)
             .endAt(Number.MAX_SAFE_INTEGER)
             .limitToLast(INITIAL_SEARCH_CHUNK_SIZE);
 
-        ctrl.queryRef.on("value", onSearchResults.bind(ctrl, searchStr));
+        vnode.state.queryRef.on("value", onSearchResults.bind(vnode.state, searchStr));
     };
 
-    ctrl.searchAll = function() {
-        var searchStr = ctrl.searchInput && ctrl.searchInput.value;
+    vnode.state.searchAll = function() {
+        var searchStr = vnode.state.searchInput && vnode.state.searchInput.value;
 
         if(!searchStr) {
             return; // Not ready
         }
 
-        ctrl.searchMode = SEARCH_MODE_ALL;
+        vnode.state.searchMode = SEARCH_MODE_ALL;
 
-        if(ctrl.queryRef) {
-            ctrl.queryRef.off();
+        if(vnode.state.queryRef) {
+            vnode.state.queryRef.off();
         }
 
-        ctrl.queryRef = ctrl.contentLoc
+        vnode.state.queryRef = vnode.state.contentLoc
             .orderByChild(DB_ORDER_BY);
 
-        ctrl.queryRef.on("value", onSearchResults.bind(ctrl, searchStr));
+        vnode.state.queryRef.on("value", onSearchResults.bind(vnode.state, searchStr));
     };
 
 
-    ctrl.clearSearch = function() {
-        if(ctrl.searchInput) {
-            ctrl.searchInput.value = "";
-            ctrl.results = null;
-            ctrl.pg.first();
-            ctrl.showPage();
+    vnode.state.clearSearch = function() {
+        if(vnode.state.searchInput) {
+            vnode.state.searchInput.value = "";
+            vnode.state.results = null;
+            vnode.state.pg.first();
+            vnode.state.showPage();
         }
     };
 
-    ctrl.init();
+    vnode.state.init();
 }
 
 
-export function view(ctrl) {
-    var content = ctrl.results || ctrl.content || [],
+export function view(vnode) {
+    var content = vnode.state.results || vnode.state.content || [],
         locked  = config.locked,
-        isSearchResults = Boolean(ctrl.results);
+        isSearchResults = Boolean(vnode.state.results);
 
     if(!m.route.param("schema")) {
         m.route("/");
     }
 
     return m.component(layout, {
-        title   : get(ctrl, "schema.name") || "...",
-        loading : ctrl.loading,
+        title   : get(vnode.state, "schema.name") || "...",
+        loading : vnode.state.loading,
         content : [
             m("div", { class : layout.css.content },
                 m("div", { class : css.contentHd },
                     m("button", {
-                            onclick  : ctrl.add,
+                            onclick  : vnode.state.add,
                             class    : css.add,
                             disabled : locked || null
                         },
-                        "+ Add " + (ctrl.schema && ctrl.schema.name || "...")
+                        "+ Add " + (vnode.state.schema && vnode.state.schema.name || "...")
                     ),
-                    ctrl.schema && ctrl.schema.key ? m("a", {
-                        href   : "/listing/" + ctrl.schema.key + "/edit",
+                    vnode.state.schema && vnode.state.schema.key ? m("a", {
+                        href   : "/listing/" + vnode.state.schema.key + "/edit",
                         config : m.route,
                         class  : css.edit
                     }, "Edit Schema") : null
@@ -381,14 +380,14 @@ export function view(ctrl) {
                             m("input", {
                                 class       : css.searchInput,
                                 placeholder : "Search...",
-                                oninput     : m.withAttr("value", ctrl.searchFor),
+                                oninput     : m.withAttr("value", vnode.state.searchFor),
 
-                                config : ctrl.registerSearchInput
+                                config : vnode.state.registerSearchInput
                             }),
-                            ctrl.searchInput && ctrl.searchInput.value ?
+                            vnode.state.searchInput && vnode.state.searchInput.value ?
                                 m("button", {
                                     class   : css.searchClear,
-                                    onclick : ctrl.clearSearch.bind(ctrl)
+                                    onclick : vnode.state.clearSearch.bind(vnode.state)
                                 }, "") :
                             null
                         ]),
@@ -397,11 +396,11 @@ export function view(ctrl) {
                             m("input", {
                                 class : css.itemsPer,
                                 type  : "number",
-                                value : ctrl.pg.itemsPer,
+                                value : vnode.state.pg.itemsPer,
 
                                 disabled : isSearchResults,
 
-                                onchange : m.withAttr("value", ctrl.setItemsPer)
+                                onchange : m.withAttr("value", vnode.state.setItemsPer)
                             })
                         ),
                         (function() {
@@ -409,14 +408,14 @@ export function view(ctrl) {
                                 searchContents;
                             
                             if(isSearchResults) {
-                                if(ctrl.searchMode === SEARCH_MODE_ALL) {
+                                if(vnode.state.searchMode === SEARCH_MODE_ALL) {
                                     searchContents = "Showing all results.";
 
                                 } else if(hasMoreResults) {
                                     searchContents = [
                                         "Showing most recent " + INITIAL_SEARCH_CHUNK_SIZE + " items... ",
                                         m("button", {
-                                                onclick : ctrl.searchAll.bind(ctrl),
+                                                onclick : vnode.state.searchAll.bind(vnode.state),
                                                 class   : css.nextPageF
                                             },
                                             "Search All"
@@ -431,21 +430,21 @@ export function view(ctrl) {
 
                             return m("div", { class : css.pages }, [
                                 m("button", {
-                                        onclick  : ctrl.prevPage.bind(ctrl),
+                                        onclick  : vnode.state.prevPage.bind(vnode.state),
                                         class    : css.prevPage,
-                                        disabled : locked || ctrl.pg.page === 1 || null
+                                        disabled : locked || vnode.state.pg.page === 1 || null
                                     },
                                     "\< Prev Page"
                                 ),
                                 m("span", {
                                         class : css.currPage
                                     },
-                                    isSearchResults ? "-" : ctrl.pg.page
+                                    isSearchResults ? "-" : vnode.state.pg.page
                                 ),
                                 m("button", {
-                                        onclick  : ctrl.nextPage.bind(ctrl),
+                                        onclick  : vnode.state.nextPage.bind(vnode.state),
                                         class    : css.nextPage,
-                                        disabled : locked || ctrl.pg.page === ctrl.pg.numPages() || null
+                                        disabled : locked || vnode.state.pg.page === vnode.state.pg.numPages() || null
                                     },
                                     "Next Page \>"
                                 )
@@ -456,10 +455,10 @@ export function view(ctrl) {
 
                             m("select", {
                                     class    : css.sortSelect,
-                                    onchange : m.withAttr("value", ctrl.setOrderBy.bind(ctrl))
+                                    onchange : m.withAttr("value", vnode.state.setOrderBy.bind(vnode.state))
                                 },
                                 Object.keys(orderOpts).map(function(key) {
-                                    var selected = ctrl.orderBy.value === orderOpts[key].value;
+                                    var selected = vnode.state.orderBy.value === orderOpts[key].value;
 
                                     return m("option", { value : key, selected : selected }, orderOpts[key].label);
                                 })
@@ -479,13 +478,13 @@ export function view(ctrl) {
                                                 if(el.classList.contains(css.blink)) {
                                                     el.classList.remove(css.blink);
                                                     m.redraw();
-                                                } else if(ctrl.doOrderBlink) {
-                                                    ctrl.doOrderBlink = false;
+                                                } else if(vnode.state.doOrderBlink) {
+                                                    vnode.state.doOrderBlink = false;
                                                     el.classList.add(css.blink);
                                                     m.redraw();
                                                 }
                                             }
-                                        }, ctrl.orderBy.label),
+                                        }, vnode.state.orderBy.label),
                                     m("th", { class : css.headerActions }, "Actions")
                                 )
                             ),
@@ -500,7 +499,7 @@ export function view(ctrl) {
                                 .map(function(data) {
                                     var itemNameStatus = css.itemName,
                                         now = Date.now(),
-                                        orderBy = ctrl.orderBy.value,
+                                        orderBy = vnode.state.orderBy.value,
 
                                         itemName,
                                         itemStatus,
@@ -522,14 +521,14 @@ export function view(ctrl) {
 
                                     itemStatus = getItemStatus(data);
 
-                                    itemName = name(ctrl.schema, data);
+                                    itemName = name(vnode.state.schema, data);
                                     itemOrderedBy = data[orderBy] ? format(data[orderBy], dateFormat) : "--/--/----";
                                     itemSchedule = data.published_at ? format(data.published_at, dateFormat) : "--/--/----";
 
                                     return m("tr", {
                                             class   : css.row,
                                             onclick : function() {
-                                                m.route(prefix("/content/" + ctrl.schema.key + "/" + data.key));
+                                                m.route(prefix("/content/" + vnode.state.schema.key + "/" + data.key));
                                             }
                                         },
                                         m("td", {
@@ -562,15 +561,15 @@ export function view(ctrl) {
                                                         class    : css.remove,
                                                         title    : "Remove: " + itemName,
                                                         disabled : locked || null,
-                                                        onclick  : ctrl.remove.bind(ctrl, data)
+                                                        onclick  : vnode.state.remove.bind(vnode.state, data)
                                                     },
                                                     m.trust(removeIcon)
                                                 ),
-                                                ctrl.schema.preview ?
+                                                vnode.state.schema.preview ?
                                                     m("a", {
                                                             class  : css.preview,
                                                             title  : "Preview: " + itemName,
-                                                            href   : ctrl.schema.preview + data.key,
+                                                            href   : vnode.state.schema.preview + data.key,
                                                             target : "_blank"
                                                         },
                                                         m.trust(previewIcon)

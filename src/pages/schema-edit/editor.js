@@ -9,16 +9,14 @@ import "codemirror/addon/edit/closebrackets";
 import "codemirror/addon/selection/active-line";
 import "codemirror/addon/comment/continuecomment";
 
-export function controller(options) {
-    var ctrl = this;
-    
+export function oninit(vnode) {
     // Set up codemirror
-    ctrl.editorSetup = function(el, init) {
+    vnode.state.editorSetup = function(el, init) {
         if(init) {
             return;
         }
 
-        ctrl.editor = editor.fromTextArea(el, {
+        vnode.state.editor = editor.fromTextArea(el, {
             mode : "application/javascript",
             lint : true,
 
@@ -49,18 +47,18 @@ export function controller(options) {
             }
         });
 
-        ctrl.editor.on("changes", debounce(function() {
-            var text = ctrl.editor.doc.getValue();
+        vnode.state.editor.on("changes", debounce(function() {
+            var text = vnode.state.editor.doc.getValue();
 
-            options.ref.child("source").set(text);
+            vnode.attrs.ref.child("source").set(text);
             
-            options.worker.postMessage(text);
+            vnode.attrs.worker.postMessage(text);
         }, 500, { maxWait : 5000 }));
     };
 }
 
-export function view(ctrl, options) {
-    return m("textarea", { config : ctrl.editorSetup },
-        options.source
+export function view(vnode) {
+    return m("textarea", { config : vnode.state.editorSetup },
+        vnode.attrs.source
     );
 }

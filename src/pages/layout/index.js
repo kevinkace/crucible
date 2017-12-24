@@ -12,43 +12,41 @@ import loading from "./loading.css";
 // exporting so others can use it more easily
 export { layout as css };
 
-export function controller() {
-    var ctrl = this;
+export function oninit(vnode) {
+    vnode.state.schemas = null;
+    vnode.state.auth = auth();
 
-    ctrl.schemas = null;
-    ctrl.auth = auth();
-
-    ctrl.add = function() {
+    vnode.state.add = function() {
         m.route(prefix("/content/new"));
     };
 
     db.child("schemas").on("value", function(snap) {
-        ctrl.schemas = [];
+        vnode.state.schemas = [];
 
         snap.forEach(function(schema) {
             var val = schema.val();
 
             val.key = schema.key();
 
-            ctrl.schemas.push(val);
+            vnode.state.schemas.push(val);
         });
 
         m.redraw();
     });
 }
 
-export function view(ctrl, options) {
+export function view(vnode) {
     var current = m.route(),
         locked  = config.locked;
 
-    if(!options) {
-        options = false;
+    if(!vnode.attrs) {
+        vnode.attrs = false;
     }
 
-    document.title = (options.title || "Loading...") + " | " + title;
+    document.title = (vnode.attrs.title || "Loading...") + " | " + title;
 
     return m("div", { class : layout.container },
-        options && options.loading ?
+        vnode.attrs && vnode.attrs.loading ?
             m("div", { class : loading.bar }) :
             null,
 
@@ -63,9 +61,9 @@ export function view(ctrl, options) {
             ),
 
             m("div", { class : header.headerBd },
-                ctrl.auth ? [
+                vnode.state.auth ? [
                     m("div", { class : header.schemas },
-                        (ctrl.schemas || []).map(function(schema) {
+                        (vnode.state.schemas || []).map(function(schema) {
                             var searchUrl = prefix("/content/" + schema.key),
                                 targetUrl = prefix("/listing/" + schema.key),
                                 active;
@@ -88,7 +86,7 @@ export function view(ctrl, options) {
                         disabled : locked || null,
 
                         // Events
-                        onclick : ctrl.add
+                        onclick : vnode.state.add
                     }, "New Schema"),
 
                     m("a", {
@@ -100,6 +98,6 @@ export function view(ctrl, options) {
                 null
             )
         ),
-        options.content ? options.content : null
+        vnode.attrs.content ? vnode.attrs.content : null
     );
 }

@@ -13,46 +13,44 @@ import "codemirror/mode/markdown/markdown";
 
 export default {
     oninit : function(vnode) {
-        var ctrl = this;
+        vnode.state.id       = id(vnode.attrs);
+        vnode.state.markdown = vnode.attrs.data || "";
+        vnode.state.previewing  = false;
+        vnode.state.previewHTML = null;
 
-        ctrl.id       = id(vnode.attrs);
-        ctrl.markdown = vnode.attrs.data || "";
-        ctrl.previewing = false;
-        ctrl.previewHTML = null;
+        vnode.state.attrs = vnode.attrs;
 
-        ctrl.options = vnode.attrs;
-
-        ctrl.togglePreview = function(e) {
+        vnode.state.togglePreview = function(e) {
             e.preventDefault();
 
-            ctrl.previewHTML = md.render(ctrl.markdown);
-            ctrl.previewing = !ctrl.previewing;
+            vnode.state.previewHTML = md.render(vnode.state.markdown);
+            vnode.state.previewing = !vnode.state.previewing;
         };
 
-        ctrl.editorChanged = function() {
-            ctrl.markdown = ctrl.editor.doc.getValue();
+        vnode.state.editorChanged = function() {
+            vnode.state.markdown = vnode.state.editor.doc.getValue();
 
-            ctrl.options.update(ctrl.options.path, ctrl.markdown);
+            vnode.state.attrs.update(vnode.state.attrs.path, vnode.state.markdown);
         };
 
-        ctrl.editorSetup = function(el, init) {
+        vnode.state.editorSetup = function(el, init) {
             if(init) {
                 return;
             }
 
-            ctrl.editor = editor.fromTextArea(el, {
+            vnode.state.editor = editor.fromTextArea(el, {
                 mode : "text/x-markdown",
 
                 indentUnit   : 4,
                 lineWrapping : true
             });
 
-            ctrl.editor.on("changes", ctrl.editorChanged);
+            vnode.state.editor.on("changes", vnode.state.editorChanged);
         };
     },
 
     view : function(vnode) {
-        vnode.state.options = vnode.attrs;
+        vnode.state.attrs = vnode.attrs;
 
         return m("div", { class : vnode.attrs.class },
             label(vnode.state, vnode.attrs),

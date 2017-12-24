@@ -37,20 +37,18 @@ function timestamp(side, date, time) {
 // All transformations to and from the date+time input fields will be
 // handled by this controller.
 
-export function controller(options) {
-    var ctrl = this;
+export function oninit(vnode) {
+    vnode.state.content = vnode.attrs.content;
 
-    ctrl.content = options.content;
+    vnode.state.inputs = null;
+    vnode.state.ts     = null;
 
-    ctrl.inputs = null;
-    ctrl.ts     = null;
-
-    ctrl.makeSchedule = function() {
-        var dates = ctrl.content.get().dates,
+    vnode.state.makeSchedule = function() {
+        var dates = vnode.state.content.get().dates,
             pub   = dates.published_at,
             unpub = dates.unpublished_at;
 
-        ctrl.inputs = {
+        vnode.state.inputs = {
             valid : dates.validSchedule,
 
             start : {
@@ -66,59 +64,59 @@ export function controller(options) {
     };
 
     function determineTimestamps() {
-        ctrl.ts = {
-            published_at   : timestamp("start", ctrl.inputs.start.date, ctrl.inputs.start.time),
-            unpublished_at : timestamp("end",   ctrl.inputs.end.date,   ctrl.inputs.end.time)
+        vnode.state.ts = {
+            published_at   : timestamp("start", vnode.state.inputs.start.date, vnode.state.inputs.start.time),
+            unpublished_at : timestamp("end",   vnode.state.inputs.end.date,   vnode.state.inputs.end.time)
         };
     }
 
-    ctrl.onChange = function(side, part, val) {
+    vnode.state.onChange = function(side, part, val) {
         var dateField,
             ts;
 
         dateField = side === "start" ? "published" : "unpublished";
-        ctrl.inputs[side][part] = val;
+        vnode.state.inputs[side][part] = val;
 
         determineTimestamps();
-        ts = ctrl.ts[dateField + "_at"];
+        ts = vnode.state.ts[dateField + "_at"];
 
-        ctrl.content.schedule.setDateField(dateField, ts);
+        vnode.state.content.schedule.setDateField(dateField, ts);
     };
 
     // Init
-    ctrl.makeSchedule();
+    vnode.state.makeSchedule();
 }
 
-function mScheduleInput(ctrl, id, side, part) {
+function mScheduleInput(state, id, side, part) {
     return m("input", {
         id    : id,
         type  : part,
-        class : ctrl.inputs.valid ? css.date : css.invalidDate,
-        value : ctrl.inputs[side][part],
+        class : state.inputs.valid ? css.date : css.invalidDate,
+        value : state.inputs[side][part],
 
         // Events
-        oninput : m.withAttr("value", ctrl.onChange.bind(ctrl, side, part))
+        oninput : m.withAttr("value", state.onChange.bind(state, side, part))
     });
 }
 
-export function view(ctrl) {
-    var schedule = ctrl.content.schedule;
+export function view(vnode) {
+    var schedule = vnode.state.content.schedule;
 
     // Update schedule on redraw.
-    ctrl.makeSchedule();
+    vnode.state.makeSchedule();
 
     return m("div", { class : css.details },
         m("div", { class : css.start },
             m("p", m("label", { for : "published_at_date" }, "Publish at")),
 
-            m("p", mScheduleInput(ctrl, "published_at_date", "start", "date")),
-            m("p", mScheduleInput(ctrl, "published_at_time", "start", "time"))
+            m("p", mScheduleInput(vnode.state, "published_at_date", "start", "date")),
+            m("p", mScheduleInput(vnode.state, "published_at_time", "start", "time"))
         ),
         m("div", { class : css.end },
             m("p", m("label", { for : "unpublished_at_date" }, "Until (optional)")),
 
-            m("p", mScheduleInput(ctrl, "unpublished_at_date", "end", "date")),
-            m("p", mScheduleInput(ctrl, "unpublished_at_time", "end", "time")),
+            m("p", mScheduleInput(vnode.state, "unpublished_at_date", "end", "date")),
+            m("p", mScheduleInput(vnode.state, "unpublished_at_time", "end", "time")),
             m("p",
                 m("button", {
                         class : css.clearSchedule,

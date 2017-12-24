@@ -7,8 +7,8 @@ import * as children from "../../types/children.js";
 import css from "./form.css";
 import layout from "../layout/layout.css";
 
-export function view(ctrl, options) {
-    var content = options.content,
+export function view(vnode) {
+    var content = vnode.attrs.content,
         state   = content.get(),
         status  = state.meta.status;
 

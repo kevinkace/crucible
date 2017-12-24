@@ -7,27 +7,25 @@ import prefix from "../lib/prefix";
 import * as layout from "./layout/index";
 import css from "./schema-new.css";
 
-export function controller() {
-    var ctrl  = this;
+export function oninit(vnode) {
+    vnode.state.name = "";
+    vnode.state.slug = false;
 
-    ctrl.name = "";
-    ctrl.slug = false;
-
-    ctrl.oninput = function(name) {
-        ctrl.name = name;
-        ctrl.slug = sluggo(name);
+    vnode.state.oninput = function(name) {
+        vnode.state.name = name;
+        vnode.state.slug = sluggo(name);
     };
 
-    ctrl.onsubmit = function(e) {
+    vnode.state.onsubmit = function(e) {
         e.preventDefault();
 
-        db.child("schemas/" + ctrl.slug).set({
-            name    : ctrl.name,
+        db.child("schemas/" + vnode.state.slug).set({
+            name    : vnode.state.name,
             created : db.TIMESTAMP,
             updated : db.TIMESTAMP
         });
 
-        m.route.set(prefix("/content/" + ctrl.slug + "/edit"));
+        m.route.set(prefix("/content/" + vnode.state.slug + "/edit"));
     };
 }
 

@@ -6,42 +6,41 @@ import css from "./invalid-msg.css";
 // information about this transitioning element. Mithril makes it pretty
 // tricky to do this sort of a transition over time or after a delay.
 
-export function controller(options) {
-    var ctrl    = this,
-        content = options.content;
+export function oninit(vnode) {
+    var content = vnode.attrs.content;
 
-    ctrl.invalidMessages = [];
-    ctrl.wasInvalid = false;
-    ctrl.transitioning = false;
+    vnode.state.invalidMessages = [];
+    vnode.state.wasInvalid = false;
+    vnode.state.transitioning = false;
 
-    ctrl.updateState = function(state) {
+    vnode.state.updateState = function(state) {
         // We need to retain our own copy of the invalid fields,
         // because they get cleared out from state very quickly.
-        ctrl.invalidMessages = state.form.invalidMessages;
-        ctrl.wasInvalid = state.ui.invalid;
-        ctrl.transitioning = true;
+        vnode.state.invalidMessages = state.form.invalidMessages;
+        vnode.state.wasInvalid = state.ui.invalid;
+        vnode.state.transitioning = true;
     };
 
-    ctrl.reset = function() {
+    vnode.state.reset = function() {
         content.validity.reset();
 
-        ctrl.invalidMessages = [];
-        ctrl.wasInvalid = false;
-        ctrl.transitioning = false;
+        vnode.state.invalidMessages = [];
+        vnode.state.wasInvalid = false;
+        vnode.state.transitioning = false;
     };
 }
 
-export function view(ctrl, options) {
-    var content = options.content,
+export function view(vnode) {
+    var content = vnode.attrs.content,
         state   = content.get(),
         invalid = state.ui.invalid;
 
-    if(!invalid && !ctrl.transitioning) {
+    if(!invalid && !vnode.state.transitioning) {
         return m("div", { style : "display:none;" });
     }
 
-    if(invalid && !ctrl.wasInvalid) {
-        ctrl.updateState(state);
+    if(invalid && !vnode.state.wasInvalid) {
+        vnode.state.updateState(state);
     }
 
     return m("div", {
@@ -52,18 +51,18 @@ export function view(ctrl, options) {
                     return;
                 }
 
-                ctrl.transitioning = true;
+                vnode.state.transitioning = true;
                 content.toggleInvalid(false);
 
                 el.addEventListener("transitionend", function(evt) {
-                    ctrl.reset();
+                    vnode.state.reset();
                     m.redraw();
                 });
             }
         },
         "The form cannot be saved.",
         m("ul",
-            ctrl.invalidMessages.map(function(name) {
+            vnode.state.invalidMessages.map(function(name) {
                 return m("li", name);
             })
         ),
@@ -71,7 +70,7 @@ export function view(ctrl, options) {
                 class : css.closeInvalidMessage,
 
                 onclick : function() {
-                    ctrl.reset();
+                    vnode.state.reset();
                     content.validity.reset();
                 }
             },

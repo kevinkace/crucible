@@ -9,47 +9,46 @@ import css from "./types.css";
 
 export default function(type) {
     return {
-        controller : function(options) {
-            var ctrl    = this,
-                content = options.content,
-                val     = get(options.field, "attrs.value");
+        oninit : function(vnode) {
+            var content = vnode.attrs.content,
+                val     = get(vnode.attrs.field, "attrs.value");
                 
-            ctrl.id = id(options);
+            vnode.state.id = id(vnode.attrs);
             
             // tivac/crucible#96
             // If this is a new item (never been updated) set the default value
             // Don't want to use that value on every render because it is bad UX,
             // the user becomes unable to clear out the field
-            if(val && options.root) {
-                options.root.child("updated_at").on("value", function(snap) {
+            if(val && vnode.attrs.root) {
+                vnode.attrs.root.child("updated_at").on("value", function(snap) {
                     if(snap.exists()) {
                         return;
                     }
                     
-                    content.setField(options.path, val);
+                    content.setField(vnode.attrs.path, val);
                     
                     m.redraw();
                 });
             }
         },
 
-        view : function(ctrl, options) {
-            var content = options.content,
-                field  = options.field;
+        view : function(vnode) {
+            var content = vnode.attrs.content,
+                field  = vnode.attrs.field;
             
-            return m("div", { class : options.class },
-                label(ctrl, options),
+            return m("div", { class : vnode.attrs.class },
+                label(vnode.state, vnode.attrs),
                 m("input", assign({}, field.attrs || {}, {
                         // attrs
-                        id       : ctrl.id,
+                        id       : vnode.state.id,
                         name     : field.name,
                         type     : type || "text",
                         class    : css[type || "text"],
-                        value    : options.data || "",
-                        required : options.required,
+                        value    : vnode.attrs.data || "",
+                        required : vnode.attrs.required,
 
                         // events
-                        oninput : m.withAttr("value", content.setField.bind(content, options.path))
+                        oninput : m.withAttr("value", content.setField.bind(content, vnode.attrs.path))
                     }
                 ))
             );

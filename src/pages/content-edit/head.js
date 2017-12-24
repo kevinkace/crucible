@@ -14,8 +14,8 @@ import removeIcon from "../../icons/remove.svg";
 
 import css from "./head.css";
 
-export function view(ctrl, options) {
-    var content  = options.content,
+export function view(vnode) {
+    var content  = vnode.attrs.content,
         schedule = content.schedule,
         state    = content.get(),
         locked   = config.locked;
@@ -100,7 +100,7 @@ export function view(ctrl, options) {
             // Schedule Pop Up
             !state.ui.schedule ?
                 null :
-                m.component(scheduleBox, options)
+                m.component(scheduleBox, vnode.attrs)
         )
     );
 }

@@ -12,16 +12,14 @@ import label from "./label";
 
 export default function(args, view) {
     return {
-        controller : function(options) {
-            var ctrl = this;
-
-            ctrl.id = id(options);
+        oninit : function(vnode) {
+            vnode.state.id = id(vnode.attrs);
 
             // Update data object w/ default status of the field (if set)
 
 
             // Figure out selected status for children
-            ctrl.selected = function(opts) {
+            vnode.state.selected = function(opts) {
                 var field  = opts.field,
                     values = opts.data,
                     matches;
@@ -49,7 +47,7 @@ export default function(args, view) {
                 });
             };
 
-            ctrl.value = function(opts, key, value) {
+            vnode.state.value = function(opts, key, value) {
                 return opts.update(
                     args.multiple ? opts.path.concat(key) : opts.path,
                     value
@@ -57,12 +55,12 @@ export default function(args, view) {
             };
         },
 
-        view : function(ctrl, options) {
-            var children = ctrl.selected(options);
+        view : function(vnode) {
+            var children = vnode.state.selected(vnode.attrs);
             
-            return m("div", { class : options.class },
-                label(ctrl, options, children),
-                view(ctrl, options, children)
+            return m("div", { class : vnode.attrs.class },
+                label(vnode.state, vnode.attrs, children),
+                view(vnode.state, vnode.attrs, children)
             );
         }
     };
