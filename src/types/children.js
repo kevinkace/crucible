@@ -11,10 +11,10 @@ import css from "./lib/types.css";
 // Bound below
 var types;
 
-export function view(ctrl, options) {
-    var content = options.content,
-        fields = options.fields || [],
-        registerHidden = options.registerHidden,
+export function view(vnode) {
+    var content = vnode.attrs.content,
+        fields = vnode.attrs.fields || [],
+        registerHidden = vnode.attrs.registerHidden,
         mFields = [];
 
     mFields = fields.map(function(field, index) {
@@ -34,7 +34,7 @@ export function view(ctrl, options) {
 
         if(field.show) {
             wasHidden = field.show.hidden;
-            field.show.hidden = checkHidden(options.state, field);
+            field.show.hidden = checkHidden(vnode.attrs.state, field);
 
             if(field.show.hidden !== wasHidden) {
                 // hidden status changed, notify the controller.
@@ -45,14 +45,14 @@ export function view(ctrl, options) {
 
         isHidden = get(field, "show.hidden");
 
-        result = m.component(component, assign({}, options, {
+        result = m(component, assign({}, vnode.attrs, {
             field   : field,
             content : content,
             update  : content.setField.bind(content),
 
             class : addClasses(field, css[index ? "field" : "first"]),
-            data  : get(options.data, field.key),
-            path  : options.path.concat(field.key),
+            data  : get(vnode.attrs.data, field.key),
+            path  : vnode.attrs.path.concat(field.key),
 
             required : !isHidden && field.required
         }));
@@ -61,7 +61,7 @@ export function view(ctrl, options) {
         return result;
     });
 
-    return m("div", options.class ? { class : options.class } : null,
+    return m("div", vnode.attrs.class ? { class : vnode.attrs.class } : null,
         mFields
     );
 }

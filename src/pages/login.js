@@ -31,12 +31,12 @@ export function controller() {
                 return loginRedirect();
             }
 
-            return m.route(prefix("/"));
+            return m.route.set(prefix("/"));
         });
     }
 
     if(!config.auth || valid()) {
-        return m.route(prefix("/"));
+        return m.route.set(prefix("/"));
     }
 
     ctrl.onsubmit = function(e) {
@@ -54,7 +54,7 @@ export function controller() {
                 return m.redraw();
             }
 
-            return m.route(prefix("/"));
+            return m.route.set(prefix("/"));
         });
     };
 
@@ -63,28 +63,28 @@ export function controller() {
     }
 }
 
-export function view(ctrl) {
+export function view(vnode) {
     if(config.auth === "jwt") {
         if(m.route.param("auth")) {
-            return m.component(layout, {
+            return m(layout, {
                 content : m("div", { class : layout.css.content },
                     m("p", "Validating credentials...")
                 )
             });
         }
 
-        return m.component(layout, {
+        return m(layout, {
             content : m("div", { class : layout.css.content },
                 m("p", "Redirecting to login...")
             )
         });
     }
 
-    return m.component(layout, {
+    return m(layout, {
         title   : "Login",
         content : m("div", { class : layout.css.content },
             m("div", { class : layout.css.body },
-                m("form", { class : css.form, onsubmit : ctrl.onsubmit },
+                m("form", { class : css.form, onsubmit : vnode.state.onsubmit },
                     m("p",
                         m("label", { class : css.label }, "Email"),
                         m("input", { name : "email", type : "email" })
@@ -96,7 +96,7 @@ export function view(ctrl) {
                     m("button", { class : css.button, type : "submit" }, "Login")
                 ),
 
-                m("p", { class : css.error }, ctrl.error ? "ERROR: " + ctrl.error : null)
+                m("p", { class : css.error }, vnode.state.error ? "ERROR: " + vnode.state.error : null)
             )
         )
     });
