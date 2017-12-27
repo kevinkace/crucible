@@ -57,7 +57,7 @@ export function oninit(vnode) {
 
         // Don't try to grab non-existent data
         if(!snap.exists()) {
-            return m.route(prefix("/listing/" + m.route.param("schema")));
+            return m.route.set(prefix("/listing/" + m.route.param("schema")));
         }
 
         content.processServerData(data, ref);
@@ -88,7 +88,7 @@ export function view(vnode) {
         .join(" | ");
 
     if(!vnode.state.id) {
-        m.route(prefix("/listing/" + state.schema.key));
+        m.route.set(prefix("/listing/" + state.schema.key));
     }
 
     return m.component(layout, {

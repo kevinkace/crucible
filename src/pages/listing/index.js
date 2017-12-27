@@ -240,7 +240,7 @@ export function oninit(vnode) {
             created_by : db.getAuth().uid
         });
 
-        m.route(prefix("/content/" + vnode.state.schema.key + "/" + result.key()));
+        m.route.set(prefix("/content/" + vnode.state.schema.key + "/" + result.key()));
     };
 
     vnode.state.remove = function(data, e) {
@@ -350,7 +350,7 @@ export function view(vnode) {
         isSearchResults = Boolean(vnode.state.results);
 
     if(!m.route.param("schema")) {
-        m.route("/");
+        m.route.set("/");
     }
 
     return m.component(layout, {
@@ -528,7 +528,7 @@ export function view(vnode) {
                                     return m("tr", {
                                             class   : css.row,
                                             onclick : function() {
-                                                m.route(prefix("/content/" + vnode.state.schema.key + "/" + data.key));
+                                                m.route.set(prefix("/content/" + vnode.state.schema.key + "/" + data.key));
                                             }
                                         },
                                         m("td", {

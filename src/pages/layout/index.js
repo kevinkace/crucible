@@ -17,7 +17,7 @@ export function oninit(vnode) {
     vnode.state.auth = auth();
 
     vnode.state.add = function() {
-        m.route(prefix("/content/new"));
+        m.route.set(prefix("/content/new"));
     };
 
     db.child("schemas").on("value", function(snap) {
@@ -36,7 +36,7 @@ export function oninit(vnode) {
 }
 
 export function view(vnode) {
-    var current = m.route(),
+    var current = m.route.get(),
         locked  = config.locked;
 
     if(!vnode.attrs) {
