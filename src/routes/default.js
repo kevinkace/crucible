@@ -14,6 +14,7 @@ import * as edit from "../pages/content-edit/index.js";
 import * as listing from "../pages/listing/index.js";
 
 export default function() {
+    m.route.prefix("");
     m.route(document.body, prefix("/"), keys({
         "/" : auth(home),
 
