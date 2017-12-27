@@ -353,7 +353,7 @@ export function view(vnode) {
         m.route.set("/");
     }
 
-    return m.component(layout, {
+    return m(layout, {
         title   : get(vnode.state, "schema.name") || "...",
         loading : vnode.state.loading,
         content : [

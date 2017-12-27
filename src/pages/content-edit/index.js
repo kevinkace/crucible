@@ -79,7 +79,7 @@ export function view(vnode) {
         title;
 
     if(!state.schema) {
-        return m.component(layout, { loading : true });
+        return m(layout, { loading : true });
     }
 
     title = [ get(state.meta, "name"), get(state.schema, "name") ]
@@ -91,13 +91,13 @@ export function view(vnode) {
         m.route.set(prefix("/listing/" + state.schema.key));
     }
 
-    return m.component(layout, {
+    return m(layout, {
         title   : title,
         loading : vnode.state.loading,
         content : [
             m("div", { class : layout.css.content },
-                m.component(head,     { content : vnode.state.content }),
-                m.component(formView, { content : vnode.state.content })
+                m(head,     { content : vnode.state.content }),
+                m(formView, { content : vnode.state.content })
             )
         ]
     });

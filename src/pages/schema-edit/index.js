@@ -82,10 +82,10 @@ export function view(vnode) {
         state   = content.get();
 
     if(!vnode.state.schema) {
-        return m.component(layout, { loading : true });
+        return m(layout, { loading : true });
     }
 
-    return m.component(layout, {
+    return m(layout, {
         title   : "Edit Schema: " + capitalize(vnode.state.schema.name),
         content : m("div", { class : layout.css.content },
             vnode.state.error ?
@@ -100,7 +100,7 @@ export function view(vnode) {
                     m("div", { class : css.definitions },
                         m("h2", "Field Definitions"),
                         m("div", { class : css.editor },
-                            m.component(editor, {
+                            m(editor, {
                                 ref    : vnode.state.ref,
                                 worker : vnode.state.worker,
                                 source : vnode.state.schema.source || "{\n\n}"
@@ -111,7 +111,7 @@ export function view(vnode) {
                     m("div", { class : css.preview },
                         m("h2", "Preview"),
                         m("div", { class : css.fields },
-                            m.component(children, {
+                            m(children, {
                                 fields : vnode.state.schema.fields,
                                 class  : css.children,
                                 data   : state.fields || {},

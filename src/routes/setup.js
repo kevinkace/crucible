@@ -5,6 +5,7 @@ import prefix from "../lib/prefix";
 import * as setup from "../pages/setup.js";
 
 export default function() {
+    // todo: use prefix()
     m.route.prefix("");
     m.route(
         document.body,

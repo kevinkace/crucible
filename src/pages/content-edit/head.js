@@ -81,7 +81,7 @@ export function view(vnode) {
                     ),
                     !state.form ?
                         null :
-                        m.component(invalidMsg, { content : content })
+                        m(invalidMsg, { content : content })
                 ),
 
                 m("button", {
@@ -100,7 +100,7 @@ export function view(vnode) {
             // Schedule Pop Up
             !state.ui.schedule ?
                 null :
-                m.component(scheduleBox, vnode.attrs)
+                m(scheduleBox, vnode.attrs)
         )
     );
 }

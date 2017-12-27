@@ -46,7 +46,7 @@ export function view(vnode) {
                         oninput : m.withAttr("value", content.titleChange.bind(content))
                     }
                 ),
-                m.component(children, {
+                m(children, {
                     class  : css.children,
                     data   : state.fields || {},
                     fields : state.schema.fields,
