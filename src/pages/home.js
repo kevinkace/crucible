@@ -11,10 +11,10 @@ export function view() {
             m("div", { class : css.body },
                 m("ul",
                     m("li",
-                        m("a", { href : "/schemas", oncreate: m.route.link }, "Schemas")
+                        m("a", { href : "/schemas", oncreate : m.route.link }, "Schemas")
                     ),
                     m("li",
-                        m("a", { href : "/content", oncreate: m.route.link }, "Content")
+                        m("a", { href : "/content", oncreate : m.route.link }, "Content")
                     )
                 )
             )

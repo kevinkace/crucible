@@ -28,10 +28,10 @@ export function view(vnode) {
             m("div", { class : css.actions }, [
                 m("a", {
                         // Attrs
-                        class  : css.back,
-                        title  : "Back to Listing",
-                        href   : prefix("/listing/" + state.schema.key),
-                        config : m.route
+                        class    : css.back,
+                        title    : "Back to Listing",
+                        href     : prefix("/listing/" + state.schema.key),
+                        oncreate : m.route.link
                     },
                     m.trust(arrowIcon),
                     "Back"

@@ -53,9 +53,9 @@ export function view(vnode) {
         m("div", { class : header.header },
 
             m("a", {
-                    class  : header.headerHd,
-                    href   : prefix("/"),
-                    config : m.route
+                    class    : header.headerHd,
+                    href     : prefix("/"),
+                    oncreate : m.route.link
                 },
                 m("h1", { class : header.title }, title)
             ),
@@ -71,9 +71,9 @@ export function view(vnode) {
                             active = current.indexOf(searchUrl) === 0 || current.indexOf(targetUrl) === 0;
 
                             return m("a", {
-                                    class  : header[active ? "active" : "schema"],
-                                    href   : targetUrl,
-                                    config : m.route
+                                    class    : header[active ? "active" : "schema"],
+                                    href     : targetUrl,
+                                    oncreate : m.route.link
                                 },
                                 schema.name
                             );
@@ -90,9 +90,9 @@ export function view(vnode) {
                     }, "New Schema"),
 
                     m("a", {
-                        class  : header.logout,
-                        href   : prefix("/logout"),
-                        config : m.route
+                        class    : header.logout,
+                        href     : prefix("/logout"),
+                        oncreate : m.route.link
                     }, "Logout")
                 ] :
                 null

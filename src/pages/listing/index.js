@@ -367,9 +367,9 @@ export function view(vnode) {
                         "+ Add " + (vnode.state.schema && vnode.state.schema.name || "...")
                     ),
                     vnode.state.schema && vnode.state.schema.key ? m("a", {
-                        href   : "/listing/" + vnode.state.schema.key + "/edit",
-                        config : m.route,
-                        class  : css.edit
+                        href     : "/listing/" + vnode.state.schema.key + "/edit",
+                        oncreate : m.route.link,
+                        class    : css.edit
                     }, "Edit Schema") : null
                 ),
                 m("div", { class : css.contentBd }, [
