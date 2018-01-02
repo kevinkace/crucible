@@ -60,7 +60,7 @@ function contentFromSnapshot(snap, orderBy, removeOverflow) {
     return content;
 }
 
-export function oninit(vnode) {
+function oninit(vnode) {
     var defaultSort = orderOpts.updated,
         orderByKey,
         schema;
@@ -343,6 +343,9 @@ export function oninit(vnode) {
     vnode.state.init();
 }
 
+const onbeforeupdate = oninit;
+
+export {onbeforeupdate as onbeforeupdate, oninit as oninit};
 
 export function view(vnode) {
     var content = vnode.state.results || vnode.state.content || [],
