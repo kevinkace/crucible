@@ -334,7 +334,6 @@ export function oninit(vnode) {
 }
 
 export function onbeforeupdate(vnode) {
-    debugger;
     if(m.route.param("schema") !== vnode.state.schema.name) {
         return oninit(vnode);
     }
@@ -527,6 +526,7 @@ export function view(vnode) {
 
                                     return m("tr", {
                                             class   : css.row,
+                                            id      : data.key,
                                             onclick : function() {
                                                 m.route.set(prefix("/content/" + vnode.state.schema.key + "/" + data.key));
                                             }
