@@ -26,26 +26,6 @@ export default {
 
         vnode.state.attrs = vnode.attrs;
 
-        vnode.state.config = function(el, init) {
-            if(init) {
-                return;
-            }
-
-            vnode.state.autocomplete = new Awesomeplete(el, {
-                minChars  : 3,
-                maxItems  : 10,
-                autoFirst : true
-            });
-
-            vnode.state.input = el;
-
-            el.addEventListener("awesomplete-selectcomplete", vnode.state.add);
-
-            vnode.state.autocomplete.list = vnode.state.names;
-
-            vnode.state.load();
-        };
-
         vnode.state.load = function() {
             if(vnode.state.handle) {
                 return;
@@ -119,7 +99,22 @@ export default {
                 // Attrs
                 id     : vnode.state.id,
                 class  : types.relationship,
-                config : vnode.state.config,
+
+                oncreate : function(inputVnode) {
+                    vnode.state.autocomplete = new Awesomeplete(inputVnode.dom, {
+                        minChars  : 3,
+                        maxItems  : 10,
+                        autoFirst : true
+                    });
+
+                    vnode.state.input = inputVnode;
+
+                    inputVnode.dom.addEventListener("awesomplete-selectcomplete", vnode.state.add);
+
+                    vnode.state.autocomplete.list = vnode.state.names;
+
+                    vnode.state.load();
+                },
 
                 // Events
                 onkeydown : function(e) {
