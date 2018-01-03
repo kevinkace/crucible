@@ -154,12 +154,8 @@ export function view(vnode) {
                                     oninput : vnode.state.previewChanged,
 
                                     // Config Fn
-                                    config : function(el, init) {
-                                        if(init) {
-                                            return;
-                                        }
-
-                                        vnode.state.preview.valid = el.validity.valid;
+                                    oncreate : function(inputVnode) {
+                                        vnode.state.preview.valid = inputVnode.dom.validity.valid;
                                     }
                                 }),
                                 m("p", { class : css.previewUrl },

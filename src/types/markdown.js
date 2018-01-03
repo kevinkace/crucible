@@ -32,21 +32,6 @@ export default {
 
             vnode.state.attrs.update(vnode.state.attrs.path, vnode.state.markdown);
         };
-
-        vnode.state.editorSetup = function(el, init) {
-            if(init) {
-                return;
-            }
-
-            vnode.state.editor = editor.fromTextArea(el, {
-                mode : "text/x-markdown",
-
-                indentUnit   : 4,
-                lineWrapping : true
-            });
-
-            vnode.state.editor.on("changes", vnode.state.editorChanged);
-        };
     },
 
     view : function(vnode) {
@@ -55,7 +40,18 @@ export default {
         return m("div", { class : vnode.attrs.class },
             label(vnode.state, vnode.attrs),
             m("div", { class : vnode.state.previewing ? css.inputHidden : css.input },
-                m("textarea", { config : vnode.state.editorSetup },
+                m("textarea", {
+                    oncreate : function(textareaVnode) {
+                        vnode.state.editor = editor.fromTextArea(textareaVnode.dom, {
+                            mode : "text/x-markdown",
+
+                            indentUnit   : 4,
+                            lineWrapping : true
+                        });
+
+                        vnode.state.editor.on("changes", vnode.state.editorChanged);
+                    }
+                },
                     vnode.state.markdown
                 )
             ),
