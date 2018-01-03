@@ -260,7 +260,6 @@ export function oninit(vnode) {
         return null;
     }, 800);
 
-
     vnode.state.getSearchResults = function(searchStr) {
         if(vnode.state.queryRef) {
             vnode.state.queryRef.off();
@@ -292,7 +291,6 @@ export function oninit(vnode) {
 
         vnode.state.queryRef.on("value", onSearchResults.bind(vnode.state, searchStr));
     };
-
 
     vnode.state.clearSearch = function() {
         if(vnode.state.searchInput) {
@@ -335,9 +333,12 @@ export function oninit(vnode) {
     });
 }
 
-// export function onbeforeupdate(vnode) {
-
-// }
+export function onbeforeupdate(vnode) {
+    debugger;
+    if(m.route.param("schema") !== vnode.state.schema.name) {
+        return oninit(vnode);
+    }
+}
 
 // export { oninit as onbeforeupdate };
 
@@ -345,8 +346,7 @@ export function view(vnode) {
     var content = vnode.state.results || vnode.state.content || [],
         locked  = config.locked,
         isSearchResults = Boolean(vnode.state.results),
-        hasMoreResults = (content.length >= INITIAL_SEARCH_CHUNK_SIZE),
-        searchContents;
+        hasMoreResults = (content.length >= INITIAL_SEARCH_CHUNK_SIZE);
 
     if(!m.route.param("schema")) {
         m.route.set("/");
