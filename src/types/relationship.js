@@ -97,8 +97,8 @@ export default {
             label(vnode.state, vnode.attrs),
             m("input", assign(field.attrs || {}, {
                 // Attrs
-                id     : vnode.state.id,
-                class  : types.relationship,
+                id    : vnode.state.id,
+                class : types.relationship,
 
                 oncreate : function(inputVnode) {
                     vnode.state.autocomplete = new Awesomeplete(inputVnode.dom, {
