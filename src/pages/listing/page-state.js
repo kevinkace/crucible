@@ -1,7 +1,7 @@
 import clamp from "lodash.clamp";
 
 var MIN_PAGE = 1,
-    DEFAULT_ITEMS_PER = 15,
+    ITEMS_PER_PAGE = 15,
     INITIAL_LIMITS = [
         NaN, // Pad with a NaN so our indexes match page number
         Number.MAX_SAFE_INTEGER
@@ -22,7 +22,7 @@ function PageState(itemsPer) {
         itemsPer = parseInt(itemsPer, 10);
 
         if(!itemsPer) {
-            itemsPer = DEFAULT_ITEMS_PER;
+            itemsPer = ITEMS_PER_PAGE;
         }
     }
 
@@ -30,18 +30,17 @@ function PageState(itemsPer) {
 }
 
 PageState.prototype = {
-    setItemsPer : function(newNum) {
-        var setTo = newNum;
+    setItemsPer : function(itemsPerPage) {
+        if(typeof itemsPerPage !== "number") {
+            itemsPerPage = parseInt(itemsPerPage, 10);
 
-        if(typeof setTo !== "number") {
-            setTo = parseInt(setTo, 10);
-            if(isNaN(setTo)) {
-                setTo = DEFAULT_ITEMS_PER;
+            if(isNaN(itemsPerPage)) {
+                itemsPerPage = ITEMS_PER_PAGE;
             }
         }
 
-        this.itemsPer = setTo;
-        window.localStorage.setItem("crucible:itemsPer", setTo);
+        this.itemsPer = itemsPerPage;
+        window.localStorage.setItem("crucible:itemsPer", itemsPerPage);
         this.reset();
     },
 

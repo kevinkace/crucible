@@ -60,7 +60,7 @@ function contentFromSnapshot(snap, orderBy, removeOverflow) {
     return content;
 }
 
-function oninit(vnode) {
+export function oninit(vnode) {
     var defaultSort = orderOpts.updated,
         orderByKey,
         schema;
@@ -132,39 +132,6 @@ function oninit(vnode) {
 
         m.redraw();
     }
-
-    function onSchema(snap) {
-        if(!snap.exists()) {
-            console.error("Error retrieving schema snapshot from Firebase.");
-
-            vnode.state.loading = false;
-
-            return;
-        }
-
-        vnode.state.schema = snap.val();
-        vnode.state.schema.key = snap.key();
-        vnode.state.contentLoc = db.child("content/" + vnode.state.schema.key);
-
-        vnode.state.showPage();
-    }
-
-    // Go get initial data
-    vnode.state.init = function() {
-        vnode.state.pg = new PageState();
-
-        if(window.localStorage) {
-            orderByKey = window.localStorage.getItem("crucible:orderBy");
-            vnode.state.orderBy = orderOpts[orderByKey];
-        }
-        
-        if(!vnode.state.orderBy) {
-            vnode.state.orderBy = defaultSort;
-        }
-
-        schema = db.child("schemas/" + m.route.param("schema"));
-        schema.on("value", onSchema);
-    };
 
     vnode.state.setItemsPer = function(val) {
         var num = parseInt(val, 10);
@@ -278,10 +245,6 @@ function oninit(vnode) {
         return m.redraw();
     }
 
-    vnode.state.registerSearchInput = function(el) {
-        vnode.state.searchInput = el;
-    };
-
     vnode.state.searchFor = debounce(function(input) {
         vnode.state.searchMode = SEARCH_MODE_RECENT;
 
@@ -340,17 +303,50 @@ function oninit(vnode) {
         }
     };
 
-    vnode.state.init();
+
+    // Go get initial data
+    vnode.state.pg = new PageState();
+
+    // Check previous order preference
+    if(window.localStorage) {
+        orderByKey = window.localStorage.getItem("crucible:orderBy");
+        vnode.state.orderBy = orderOpts[orderByKey];
+    }
+
+    // or use default order
+    if(!vnode.state.orderBy) {
+        vnode.state.orderBy = defaultSort;
+    }
+
+    db.child("schemas/" + m.route.param("schema")).on("value", function onSchema(snap) {
+        if(!snap.exists()) {
+            console.error("Error retrieving schema snapshot from Firebase.");
+
+            vnode.state.loading = false;
+
+            return;
+        }
+
+        vnode.state.schema = snap.val();
+        vnode.state.schema.key = snap.key();
+        vnode.state.contentLoc = db.child("content/" + vnode.state.schema.key);
+
+        vnode.state.showPage();
+    });
 }
 
-const onbeforeupdate = oninit;
+// export function onbeforeupdate(vnode) {
 
-export {onbeforeupdate as onbeforeupdate, oninit as oninit};
+// }
+
+// export { oninit as onbeforeupdate };
 
 export function view(vnode) {
     var content = vnode.state.results || vnode.state.content || [],
         locked  = config.locked,
-        isSearchResults = Boolean(vnode.state.results);
+        isSearchResults = Boolean(vnode.state.results),
+        hasMoreResults = (content.length >= INITIAL_SEARCH_CHUNK_SIZE),
+        searchContents;
 
     if(!m.route.param("schema")) {
         m.route.set("/");
@@ -369,30 +365,32 @@ export function view(vnode) {
                         },
                         "+ Add " + (vnode.state.schema && vnode.state.schema.name || "...")
                     ),
-                    vnode.state.schema && vnode.state.schema.key ? m("a", {
-                        href     : "/listing/" + vnode.state.schema.key + "/edit",
-                        oncreate : m.route.link,
-                        class    : css.edit
-                    }, "Edit Schema") : null
+                    vnode.state.schema && vnode.state.schema.key ?
+                        m("a", {
+                            href     : "/listing/" + vnode.state.schema.key + "/edit",
+                            oncreate : m.route.link,
+                            class    : css.edit
+                        }, "Edit Schema") :
+                        null
                 ),
                 m("div", { class : css.contentBd }, [
                     m("div", { class : css.metas },
-                        m("div", {
-                                class : css.search
-                            }, [
+                        m("div", { class : css.search }, [
                             m("input", {
                                 class       : css.searchInput,
                                 placeholder : "Search...",
                                 oninput     : m.withAttr("value", vnode.state.searchFor),
 
-                                config : vnode.state.registerSearchInput
+                                oncreate : function(searchVnode) {
+                                    vnode.state.searchInput = searchVnode.dom;
+                                }
                             }),
                             vnode.state.searchInput && vnode.state.searchInput.value ?
                                 m("button", {
                                     class   : css.searchClear,
                                     onclick : vnode.state.clearSearch.bind(vnode.state)
                                 }, "") :
-                            null
+                                null
                         ]),
                         m("div", { class : css.manage },
                             m("span", { class : css.itemsPerLabel }, "Items Per Page: "),
@@ -406,16 +404,13 @@ export function view(vnode) {
                                 onchange : m.withAttr("value", vnode.state.setItemsPer)
                             })
                         ),
-                        (function() {
-                            var hasMoreResults = (content.length >= INITIAL_SEARCH_CHUNK_SIZE),
-                                searchContents;
-                            
-                            if(isSearchResults) {
-                                if(vnode.state.searchMode === SEARCH_MODE_ALL) {
-                                    searchContents = "Showing all results.";
 
-                                } else if(hasMoreResults) {
-                                    searchContents = [
+                        isSearchResults ?
+                            m("div", { class : css.showingResults },
+                                vnode.state.searchMode === SEARCH_MODE_ALL ?
+                                    "Showing all results" : null,
+                                hasMoreResults ?
+                                    [
                                         "Showing most recent " + INITIAL_SEARCH_CHUNK_SIZE + " items... ",
                                         m("button", {
                                                 onclick : vnode.state.searchAll.bind(vnode.state),
@@ -423,15 +418,10 @@ export function view(vnode) {
                                             },
                                             "Search All"
                                         )
-                                    ];
-                                }
-
-                                return m("div", { class : css.showingResults },
-                                    searchContents
-                                );
-                            }
-
-                            return m("div", { class : css.pages }, [
+                                    ] :
+                                    null
+                            ) :
+                            m("div", { class : css.pages }, [
                                 m("button", {
                                         onclick  : vnode.state.prevPage.bind(vnode.state),
                                         class    : css.prevPage,
@@ -451,8 +441,8 @@ export function view(vnode) {
                                     },
                                     "Next Page \>"
                                 )
-                            ]);
-                        }()),
+                            ]),
+
                         m("div", { class : css.sort },
                             "Sort Items By: ",
 
@@ -476,14 +466,20 @@ export function view(vnode) {
                                     m("th", { class : css.headerStatus }, "Status"),
                                     m("th", { class : css.headerScheduled }, "Scheduled"),
                                     m("th", {
-                                            class  : css.headerOrderedBy,
-                                            config : function(el, isInit) {
-                                                if(el.classList.contains(css.blink)) {
-                                                    el.classList.remove(css.blink);
+                                            class : css.headerOrderedBy,
+
+                                            // todo: what does this do?
+                                            onbeforeupdate : function(thVnode) {
+                                                if(!thVnode.dom) {
+                                                    return;
+                                                }
+
+                                                if(thVnode.classList.contains(css.blink)) {
+                                                    thVnode.classList.remove(css.blink);
                                                     m.redraw();
                                                 } else if(vnode.state.doOrderBlink) {
                                                     vnode.state.doOrderBlink = false;
-                                                    el.classList.add(css.blink);
+                                                    thVnode.classList.add(css.blink);
                                                     m.redraw();
                                                 }
                                             }
@@ -494,10 +490,7 @@ export function view(vnode) {
                             m("tbody",
                                 content
                                 .sort(function(a, b) {
-                                    var aTime = a.order_by,
-                                        bTime = b.order_by;
-
-                                    return bTime - aTime;
+                                    return b.order_by - a.order_by;
                                 })
                                 .map(function(data) {
                                     var itemNameStatus = css.itemName,
@@ -525,8 +518,12 @@ export function view(vnode) {
                                     itemStatus = getItemStatus(data);
 
                                     itemName = name(vnode.state.schema, data);
-                                    itemOrderedBy = data[orderBy] ? format(data[orderBy], dateFormat) : "--/--/----";
-                                    itemSchedule = data.published_at ? format(data.published_at, dateFormat) : "--/--/----";
+
+                                    itemOrderedBy = data[orderBy] ?
+                                        format(data[orderBy], dateFormat) : "--/--/----";
+
+                                    itemSchedule = data.published_at ?
+                                        format(data.published_at, dateFormat) : "--/--/----";
 
                                     return m("tr", {
                                             class   : css.row,
