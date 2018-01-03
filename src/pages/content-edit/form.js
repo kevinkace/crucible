@@ -24,12 +24,8 @@ export function view(vnode) {
             ),
             m("form", {
                     class  : css.form,
-                    config : function(el, isInit) {
-                        if(isInit) {
-                            return;
-                        }
-
-                        content.registerForm(el);
+                    oncreate : function(formVnode) {
+                        content.registerForm(formVnode);
 
                         // force a redraw so publishing component can get
                         // new args w/ actual validity

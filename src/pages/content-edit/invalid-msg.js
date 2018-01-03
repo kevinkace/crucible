@@ -2,7 +2,7 @@ import m from "mithril";
 
 import css from "./invalid-msg.css";
 
-// A mosly-dumb controller is required here so we can retain some state 
+// A mosly-dumb controller is required here so we can retain some state
 // information about this transitioning element. Mithril makes it pretty
 // tricky to do this sort of a transition over time or after a delay.
 
@@ -30,6 +30,18 @@ export function oninit(vnode) {
     };
 }
 
+export function oncreate(vnode) {
+    var content = vnode.attrs.content;
+
+    vnode.state.transitioning = true;
+    content.toggleInvalid(false);
+
+    vnode.dom.addEventListener("transitionend", function() {
+        vnode.state.reset();
+        m.redraw();
+    });
+}
+
 export function view(vnode) {
     var content = vnode.attrs.content,
         state   = content.get(),
@@ -43,23 +55,7 @@ export function view(vnode) {
         vnode.state.updateState(state);
     }
 
-    return m("div", {
-            class : invalid ? css.visible : css.delayedHide,
-
-            config : function(el, isInit) {
-                if(isInit) {
-                    return;
-                }
-
-                vnode.state.transitioning = true;
-                content.toggleInvalid(false);
-
-                el.addEventListener("transitionend", function(evt) {
-                    vnode.state.reset();
-                    m.redraw();
-                });
-            }
-        },
+    return m("div", { class : invalid ? css.visible : css.delayedHide },
         "The form cannot be saved.",
         m("ul",
             vnode.state.invalidMessages.map(function(name) {
