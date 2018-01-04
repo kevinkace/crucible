@@ -488,11 +488,7 @@ export function view(vnode) {
                             m("tbody",
                                 content
                                 .sort(function(a, b) {
-                                    if(a.order_by && b.order_by && a.order_by !== b.order_by) {
-                                        return b.order_by - a.order_by;
-                                    }
-
-                                    return a.key > b.key ? 1 : -1;
+                                    return b.order_by - a.order_by;
                                 })
                                 .map(function(data) {
                                     var itemNameStatus = css.itemName,
