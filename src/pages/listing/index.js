@@ -62,8 +62,7 @@ function contentFromSnapshot(snap, orderBy, removeOverflow) {
 
 export function oninit(vnode) {
     var defaultSort = orderOpts.updated,
-        orderByKey,
-        schema;
+        orderByKey;
 
     vnode.state.schema  = null;
     vnode.state.content = null;
