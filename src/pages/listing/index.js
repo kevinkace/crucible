@@ -177,7 +177,7 @@ export function oninit(vnode) {
 
         // Firebase orders Ascending, so the
         // lowest/oldest entry will be first in the snapshot.
-        // We want items in descneding, so we slice our
+        // We want items in descending, so we slice our
         // query from the other end via .endAt/.limitToLast
         vnode.state.queryRef = vnode.state.contentLoc
             .orderByChild(vnode.state.orderBy.value)
