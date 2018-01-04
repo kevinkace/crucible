@@ -355,7 +355,7 @@ export function view(vnode) {
     return m(layout, {
         title   : get(vnode.state, "schema.name") || "...",
         loading : vnode.state.loading,
-        content : [
+        content :
             m("div", { class : layout.css.content },
                 m("div", { class : css.contentHd },
                     m("button", {
@@ -506,6 +506,8 @@ export function view(vnode) {
 
                                         itemOrderedBy,
                                         itemSchedule;
+                                    
+                                    console.log(data.name);
 
                                     if(data.published_at) {
                                         itemNameStatus = css.itemNamePublished;
@@ -531,6 +533,7 @@ export function view(vnode) {
 
                                     return m("tr", {
                                             class   : css.row,
+                                            key     : data.key,
                                             id      : data.key,
                                             onclick : function() {
                                                 m.route.set(prefix("/content/" + vnode.state.schema.key + "/" + data.key));
@@ -589,7 +592,6 @@ export function view(vnode) {
                     )
                 ])
             )
-        ]
     });
 }
 
