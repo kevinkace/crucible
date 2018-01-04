@@ -330,6 +330,8 @@ export function oninit(vnode) {
 
         vnode.state.showPage();
     });
+
+    return true;
 }
 
 export function onbeforeupdate(vnode) {
