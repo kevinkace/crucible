@@ -2,80 +2,74 @@ import m from "mithril";
 
 import css from "./invalid-msg.css";
 
-// A mosly-dumb controller is required here so we can retain some state 
+// A mostly-dumb controller is required here so we can retain some state
 // information about this transitioning element. Mithril makes it pretty
 // tricky to do this sort of a transition over time or after a delay.
 
-export function controller(options) {
-    var ctrl    = this,
-        content = options.content;
+export default {
+    oninit(vnode) {
+        vnode.state.invalidMessages = [];
+        vnode.state.wasInvalid = false;
+        vnode.state.transitioning = false;
+    },
 
-    ctrl.invalidMessages = [];
-    ctrl.wasInvalid = false;
-    ctrl.transitioning = false;
-
-    ctrl.updateState = function(state) {
+    updateState(state) {
         // We need to retain our own copy of the invalid fields,
         // because they get cleared out from state very quickly.
-        ctrl.invalidMessages = state.form.invalidMessages;
-        ctrl.wasInvalid = state.ui.invalid;
-        ctrl.transitioning = true;
-    };
+        this.invalidMessages = state.form.invalidMessages;
+        this.wasInvalid = state.ui.invalid;
+        this.transitioning = true;
+    },
 
-    ctrl.reset = function() {
-        content.validity.reset();
+    reset() {
+        this.content.validity.reset();
 
-        ctrl.invalidMessages = [];
-        ctrl.wasInvalid = false;
-        ctrl.transitioning = false;
-    };
-}
+        this.invalidMessages = [];
+        this.wasInvalid = false;
+        this.transitioning = false;
+    },
 
-export function view(ctrl, options) {
-    var content = options.content,
-        state   = content.get(),
-        invalid = state.ui.invalid;
+    view(vnode) {
+        const { transitioning, wasInvalid, invalidMessages } = vnode.state;
+        const { content } = vnode.attrs;
+        const state   = content.get();
+        const invalid = state.ui.invalid;
 
-    if(!invalid && !ctrl.transitioning) {
-        return m("div", { style : "display:none;" });
-    }
+        if (!invalid && !transitioning) {
+            return m("div", { style : "display:none;" });
+        }
 
-    if(invalid && !ctrl.wasInvalid) {
-        ctrl.updateState(state);
-    }
+        if (invalid && !wasInvalid) {
+            vnode.state.updateState(state);
+        }
 
-    return m("div", {
-            class : invalid ? css.visible : css.delayedHide,
+        return m("div", {
+                class : invalid ? css.visible : css.delayedHide,
 
-            config : function(el, isInit) {
-                if(isInit) {
-                    return;
-                }
+                oncreate({ dom }) {
+                    vnode.state.transitioning = true;
+                    content.toggleInvalid(false);
 
-                ctrl.transitioning = true;
-                content.toggleInvalid(false);
-
-                el.addEventListener("transitionend", function(evt) {
-                    ctrl.reset();
-                    m.redraw();
-                });
-            }
-        },
-        "The form cannot be saved.",
-        m("ul",
-            ctrl.invalidMessages.map(function(name) {
-                return m("li", name);
-            })
-        ),
-        m("button", {
-                class : css.closeInvalidMessage,
-
-                onclick : function() {
-                    ctrl.reset();
-                    content.validity.reset();
+                    dom.addEventListener("transitionend", () => {
+                        vnode.state.reset();
+                        m.redraw();
+                    });
                 }
             },
-            "x" // todo, figure out how to use a unicode x here
-        )
-    );
-}
+            "The form cannot be saved.",
+            m("ul",
+                invalidMessages.map(name => m("li", name))
+            ),
+            m("button", {
+                    class : css.closeInvalidMessage,
+
+                    onclick() {
+                        vnode.state.reset();
+                        content.validity.reset();
+                    }
+                },
+                "x" // todo, figure out how to use a unicode x here
+            )
+        );
+    }
+};

@@ -1,7 +1,7 @@
 import isFuture from "date-fns/is_future";
 import isPast from "date-fns/is_past";
 
-var STATUS = {
+const STATUS = {
     UPDATED     : "updated",
     UNPUBLISHED : "unpublished",
     SCHEDULED   : "scheduled",
@@ -9,22 +9,21 @@ var STATUS = {
 };
 
 export default function getItemStatus(itemData) {
-    var result = "...";
-
-    if(isPast(itemData.unpublished_at)) {
-        result = STATUS.UNPUBLISHED;
-    } else if(isFuture(itemData.published_at)) {
-        result = STATUS.SCHEDULED;
-    } else if(isPast(itemData.published_at)) {
-        result = STATUS.LIVE;
-    } else if(itemData.updated_at) {
-        result = STATUS.UPDATED;
+    if (isPast(itemData.unpublished_at)) {
+        return STATUS.UNPUBLISHED;
     }
 
-    return result;
+    if (isFuture(itemData.published_at)) {
+        return STATUS.SCHEDULED;
+    }
+
+    if (isPast(itemData.published_at)) {
+        return STATUS.LIVE;
+    }
+
+    if (itemData.updated_at) {
+        return STATUS.UPDATED;
+    }
+
+    return "...";
 }
-
-// export function getItemStyleClass(itemData) {
-
-// }
-

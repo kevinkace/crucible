@@ -2,73 +2,73 @@ import m from "mithril";
 import Remarkable from "remarkable";
 import editor from "codemirror";
 
-import id from "./lib/id";
+import getId from "./lib/getId";
 import label from "./lib/label";
 
 import css from "./markdown.css";
 
-var md = new Remarkable();
+const md = new Remarkable();
 
 import "codemirror/mode/markdown/markdown";
 
 export default {
-    controller : function(options) {
-        var ctrl = this;
+    oninit(vnode) {
+        vnode.state.id       = getId(vnode.attrs);
+        vnode.state.markdown = vnode.attrs.data || "";
+        vnode.state.previewing = false;
+        vnode.state.previewHTML = null;
 
-        ctrl.id       = id(options);
-        ctrl.markdown = options.data || "";
-        ctrl.previewing = false;
-        ctrl.previewHTML = null;
-
-        ctrl.options = options;
-
-        ctrl.togglePreview = function(e) {
-            e.preventDefault();
-
-            ctrl.previewHTML = md.render(ctrl.markdown);
-            ctrl.previewing = !ctrl.previewing;
-        };
-
-        ctrl.editorChanged = function() {
-            ctrl.markdown = ctrl.editor.doc.getValue();
-
-            ctrl.options.update(ctrl.options.path, ctrl.markdown);
-        };
-
-        ctrl.editorSetup = function(el, init) {
-            if(init) {
-                return;
-            }
-
-            ctrl.editor = editor.fromTextArea(el, {
-                mode : "text/x-markdown",
-
-                indentUnit   : 4,
-                lineWrapping : true
-            });
-
-            ctrl.editor.on("changes", ctrl.editorChanged);
-        };
+        vnode.state.attrs = vnode.attrs;
     },
 
-    view : function(ctrl, options) {
-        ctrl.options = options;
+    togglePreview() {
+        this.previewHTML = md.render(this.markdown);
+        this.previewing = !this.previewing;
+    },
 
-        return m("div", { class : options.class },
-            label(ctrl, options),
-            m("div", { class : ctrl.previewing ? css.inputHidden : css.input },
-                m("textarea", { config : ctrl.editorSetup },
-                    ctrl.markdown
+    editorChanged() {
+        this.markdown = this.editor.doc.getValue();
+
+        this.attrs.update(this.attrs.path, this.markdown);
+    },
+
+    editorSetup(dom) {
+        this.editor = editor.fromTextArea(dom, {
+            mode : "text/x-markdown",
+
+            indentUnit   : 4,
+            lineWrapping : true
+        });
+
+        this.editor.on("changes", this.editorChanged);
+    },
+
+    view(vnode) {
+        const { id, previewing, markdown, previewHTML } = vnode.state;
+        const { style, field } = vnode.attrs;
+
+        return m("div", { class : style },
+            m(label, { id, field }),
+            m("div", { class : previewing ? css.inputHidden : css.input },
+                m("textarea", {
+                        oncreate({ dom }) {
+                            vnode.state.editorSetup(dom);
+                        }
+                    },
+                    markdown
                 )
             ),
-            m("div", { class : ctrl.previewing ? css.input : css.inputHidden },
-                m.trust(ctrl.previewHTML)
+            m("div", { class : previewing ? css.input : css.inputHidden },
+                m.trust(previewHTML)
             ),
             m("button", {
-                    onclick : ctrl.togglePreview,
-                    class   : css.button
+                    class : css.button,
+                    onclick(e) {
+                        e.preventDefault();
+                        vnode.state.togglePreview();
+                    }
                 },
-                ctrl.previewing ? "Edit" : "Preview"
+                previewing ? "Edit" : "Preview"
             )
         );
     }

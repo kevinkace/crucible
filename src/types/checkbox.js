@@ -3,32 +3,27 @@ import m from "mithril";
 import css from "./checkbox.css";
 import multiple from "./lib/multiple";
 
-export default multiple({
-        multiple : true
-    },
-    
+export default multiple({ multiple : true },
     // View function
-    function(ctrl, options, children) {
-        var field = options.field;
-        
-        return (children || []).map(function(opt) {
-            return m("label", { class : css.checkbox },
+    (state, attrs, children) => {
+        const field = attrs.field;
+
+        return (children || []).map(opt =>
+            m("label", { class : css.checkbox },
                 m("input", {
-                    // attrs
                     type    : "checkbox",
                     name    : field.name,
                     value   : opt.value,
                     checked : opt.selected,
 
-                    required : options.required,
+                    required : attrs.required,
 
-                    // events
-                    onchange : m.withAttr("checked", function(state) {
-                        ctrl.value(options, opt.key, state && opt.value);
+                    onchange : m.withAttr("checked", value => {
+                        state.value(attrs, opt.key, value && opt.value);
                     })
                 }),
-                " " + opt.name
-            );
-        });
+                ` ${opt.name}`
+            )
+        );
     }
 );

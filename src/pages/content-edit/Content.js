@@ -13,16 +13,16 @@ import Schedule from "./lib/delegator-schedule.js";
 import Validity from "./lib/delegator-validity.js";
 
 function ContentState() {
-    // These are 100% unneccesary, programmatically,
+    // These are 100% unnecessary, programmatically,
     // they are supposed to make the data object readable.
-    var string = null,
-        number = null,
-        boolean = null,
-        formEl = null,
-        object = {},
-        array = [];
+    const string  = null;
+    const number  = null;
+    const boolean = null;
+    const formEl  = null;
+    const object  = {};
+    const array   = [];
 
-    // A few values are set to defaults to avoid 
+    // A few values are set to defaults to avoid
     // UI jitter before firebase response.
 
     return {
@@ -88,12 +88,12 @@ export default function Content() {
 }
 
 Content.prototype = {
-    init : function() {        
+    init() {
         this.validity.reset();
     },
 
-    get : function(path) {
-        if(!path) {
+    get(path) {
+        if (!path) {
             return this.state;
         }
 
@@ -101,20 +101,20 @@ Content.prototype = {
     },
 
     // Setup
-    setSchema : function(schema, key) {
+    setSchema(schema, key) {
         this.state.schema = schema;
         this.state.schema.key = key;
 
-        if(!this.state.meta.name) {
+        if (!this.state.meta.name) {
             this.state.meta.name = name(schema, {});
         }
     },
 
-    registerForm : function(formEl) {
+    registerForm(formEl) {
         this.state.form.el = formEl;
     },
 
-    processServerData : function(data, ref) {
+    mergeServerContent(data, ref) {
         this.ref = ref; // Firebase reference.
 
         this.state = merge(this.state, snapshot.toState(data));
@@ -125,12 +125,12 @@ Content.prototype = {
 
 
     // Data Changes
-    setField : function(path, val) {
+    setField(path, val) {
         this.state.dates.updated_at = Date.now();
         this.state.user.updated_by  = this.user;
         this.state.meta.dirty = true;
 
-        if(val === undefined) {
+        if (val === undefined) {
             unset(this.state, path);
         } else {
             set(this.state, path, val);
@@ -138,7 +138,7 @@ Content.prototype = {
         m.redraw();
     },
 
-    titleChange : function(entryName) {
+    titleChange(entryName) {
         this.state.meta.name = entryName;
         this.state.meta.slug = sluggo(entryName);
         this.state.meta.dirty = true;
@@ -147,49 +147,50 @@ Content.prototype = {
     },
 
     // UI
-    toggleUI : function(key, force) {
+    toggleUI(key, force) {
+        // todo: triple eq?
+        // eslint-disable-next-line eqeqeq
         this.state.ui[key] = (force != null) ? Boolean(force) : !this.state.ui[key];
         m.redraw();
     },
 
-    toggleSchedule : function(force) {
+    toggleSchedule(force) {
         this.toggleUI("schedule", force);
     },
 
-    toggleInvalid : function(force) {
+    toggleInvalid(force) {
         this.toggleUI("invalid", force);
 
-        if(force) {
+        if (force) {
             this.validity.debounceFade();
         }
     },
 
     // Persist
-    save : function() {
-        var self = this,
-            validSave,
+    save() {
+        const self = this;
+
+        let validSave,
             saveData;
 
         this.toggleSchedule(false);
         validSave = this.validity.isValidSave();
 
-        if(!validSave) {
+        if (!validSave) {
             this.toggleInvalid(true);
 
             return null;
         }
-        
+
         this.state.ui.saving  = true;
         this.state.meta.dirty = false;
         m.redraw();
 
         saveData = snapshot.fromState(this.state);
 
-        return this.ref.update(saveData, function() {
+        return this.ref.update(saveData, () => {
             self.state.ui.saving = false;
             m.redraw();
         });
     }
 };
-
-

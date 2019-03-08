@@ -1,14 +1,14 @@
 /* eslint-disable */
-var required = new RegExp("\\\\*$");
+const required = new RegExp("\\\\*$");
 
 function slugger(name) {
     return name.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
 }
 
 function processChildren(children) {
-    return Object.keys(children).map(function(label) {
-        var details = children[label];
-        
+    return Object.keys(children).map(label => {
+        const details = children[label];
+
         return {
             key      : slugger(label),
             name     : label,
@@ -20,8 +20,8 @@ function processChildren(children) {
 }
 
 function processSections(sections) {
-    return Object.keys(sections).map(function(label) {
-        var section = sections[label];
+    return Object.keys(sections).map(label => {
+        const section = sections[label];
 
         return {
             name     : label,
@@ -32,10 +32,8 @@ function processSections(sections) {
 }
 
 function processSelected(children) {
-    var i;
-
     // No `.find()` due to backwards compatibility.
-    for(i = 0; i < children.length; i++) {
+    for (let i = 0; i < children.length; i++) {
         if(children[i].selected) {
             // If there's already a selected
             // value by default, no need to modify
@@ -52,10 +50,11 @@ function processSelected(children) {
 }
 
 function process(obj) {
-    var out = [];
+    const out = [];
 
-    Object.keys(obj).forEach(function(name) {
-        var field = obj[name];
+    Object.keys(obj).forEach(name => {
+        // todo: ternary this
+        let field = obj[name];
 
         if(typeof field !== "object") {
             field = {
@@ -71,14 +70,14 @@ function process(obj) {
         }
 
         field.name = name;
-        
+
         if(!field.key) {
             field.key = slugger(name);
         }
-        
+
         if(field.show) {
             field.show.field = field.show.field.split(".").map(slugger);
-            
+
             // Regular expressions need to be saved out specially
             if(field.show.value instanceof RegExp) {
                 field.show.type  = "regexp";
@@ -88,10 +87,10 @@ function process(obj) {
 
         if(field.type === "tabs") {
             field.children = processSections(field.tabs);
-            
+
             delete field.tabs;
         }
-        
+
         if(field.type === "split") {
             field.children = processSections(field.sections);
 
@@ -123,13 +122,13 @@ function process(obj) {
 // This worker takes the nice, human-friendly config format and turns it into
 // ugly arrays of objects for firebase
 self.onmessage = function(e) {
-    var config, parsed;
+    let config, parsed;
 
     try {
         // This is super-gross but in a worker should be (mostly) safe
         eval("config = " + e.data);
         parsed = process(config);
-        
+
         return self.postMessage(JSON.stringify({ config : parsed }));
     } catch(error) {
         return self.postMessage(JSON.stringify({ error : error.toString() }));

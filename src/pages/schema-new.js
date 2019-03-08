@@ -4,61 +4,67 @@ import sluggo from "sluggo";
 import db from "../lib/firebase";
 import prefix from "../lib/prefix";
 
-import * as layout from "./layout/index";
+import layout, { layoutCss } from "./layout";
 import css from "./schema-new.css";
 
-export function controller() {
-    var ctrl  = this;
+export default {
+    oninit(vnode) {
+        vnode.state.name = "";
+        vnode.state.slug = false;
+    },
 
-    ctrl.name = "";
-    ctrl.slug = false;
+    oninput(name) {
+        this.name = name;
+        this.slug = sluggo(name);
+    },
 
-    ctrl.oninput = function(name) {
-        ctrl.name = name;
-        ctrl.slug = sluggo(name);
-    };
+    onsubmit() {
+        const { slug, name } = this;
 
-    ctrl.onsubmit = function(e) {
-        e.preventDefault();
-
-        db.child("schemas/" + ctrl.slug).set({
-            name    : ctrl.name,
+        db.child(`schemas/${slug}`).set({
+            name,
             created : db.TIMESTAMP,
             updated : db.TIMESTAMP
         });
 
-        m.route(prefix("/content/" + ctrl.slug + "/edit"));
-    };
-}
+        m.route.set(prefix(`/${slug}/edit`));
+    },
 
-export function view(ctrl) {
-    return m.component(layout, {
-        title   : "Create a Schema",
-        content : m("div", { class : layout.css.content },
-            m("div", { class : layout.css.body },
-                m("h1", { class : layout.css.title }, "New Schema"),
-                m("form", {
-                        class    : css.form,
-                        onsubmit : ctrl.onsubmit
-                    },
-                    m("div", { class : css.row },
-                        m("label", { class : css.label }, "Name: "),
-                        m("input[name=name]", {
-                            class   : css.name,
-                            oninput : m.withAttr("value", ctrl.oninput),
-                            value   : ctrl.name
+    view(vnode) {
+        const { name, slug } = vnode.state;
+
+        return m(layout, { title : "Create a Schema" },
+            m("div", { class : layoutCss.content },
+                m("div", { class : layoutCss.body },
+                    m("h1", { class : layoutCss.title }, "New Schema"),
+                    m("form", {
+                            class : css.form,
+                            onsubmit(e) {
+                                e.preventDefault();
+                                vnode.state.onsubmit();
+                            }
+                        },
+                        m("div", { class : css.row },
+                            m("label", { class : css.label }, "Name: "),
+                            m("input[name=name]", {
+                                class   : css.name,
+                                value   : name,
+                                oninput : m.withAttr("value", value => {
+                                    vnode.state.oninput(value);
+                                })
+                            })
+                        ),
+                        m("div", { class : css.row },
+                            m("span", { class : css.label }, "Slug: "),
+                            m("span", { class : css.slug }, (slug || "???"))
+                        ),
+                        m("input[type=submit]", {
+                            class : css.add,
+                            value : "Add schema"
                         })
-                    ),
-                    m("div", { class : css.row },
-                        m("span", { class : css.label }, "Slug: "),
-                        m("span", { class : css.slug }, (ctrl.slug || "???"))
-                    ),
-                    m("input[type=submit]", {
-                        class : css.add,
-                        value : "Add schema"
-                    })
+                    )
                 )
             )
-        )
-    });
-}
+        );
+    }
+};

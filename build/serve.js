@@ -8,12 +8,13 @@ var fs   = require("fs"),
     duration = require("humanize-duration"),
     jsesc    = require("jsesc"),
     rollup   = require("rollup"),
-    watch    = require("rollup-watch"),
+    watch    = rollup.watch,
     size     = require("filesize"),
     argv     = require("minimist")(process.argv.slice(2)),
 
     files  = require("./lib/files"),
-    config = require("./lib/rollup"),
+    // icons  = require("./lib/icons"),
+    config = require("./lib/rollupConfig"),
 
     server = require("connect")(),
     port   = argv.p || argv.port || 9966,
@@ -89,11 +90,11 @@ watcher.on("event", (details) => {
     }
 
     if(details.code === "ERROR") {
-        console.error(details.error.toString());
+        console.error(details.error.stack);
 
         fs.writeFileSync(
             "gen/index.js",
-            "document.body.innerHTML = \"<pre style='color: red;'>" + jsesc(details.error.toString()) + "\n\n" + jsesc(details.error.stack) + "</pre>\";"
+            "document.body.innerHTML = \"<pre style='color: red;'>" + jsesc(details.error.stack) + "</pre>\";"
         );
 
         return done && done();

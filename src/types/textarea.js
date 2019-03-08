@@ -1,44 +1,45 @@
 import m from "mithril";
 import assign from "lodash.assign";
 
-import id from "./lib/id";
+import getId from "./lib/getId";
 import label from "./lib/label";
 
 import css from "./textarea.css";
 
 export default {
-    controller : function(options) {
-        var ctrl = this;
-
-        ctrl.id   = id(options);
-        ctrl.text = options.data || "";
-
-        ctrl.resize = function(opt, value) {
-            opt.update(opt.path, value);
-
-            ctrl.text = value;
-        };
+    oninit(vnode) {
+        vnode.state.id   = getId(vnode.attrs);
+        vnode.state.text = vnode.attrs.data || "";
     },
 
-    view : function(ctrl, options) {
-        var field  = options.field;
+    resize(opt, value) {
+        opt.update(opt.path, value);
 
-        return m("div", { class : options.class },
-            label(ctrl, options),
+        this.text = value;
+    },
+
+    view(vnode) {
+        const { id, text } = vnode.state;
+        const { field, class : style, required, data } = vnode.attrs;
+
+        return m("div", { class : style },
+            m(label, { id, field }),
             m("div", { class : css.expander },
-                m("pre", { class : css.shadow }, m("span", ctrl.text), m("br")),
+                m("pre", { class : css.shadow }, m("span", text), m("br")),
                 m("textarea", assign({
-                        // attrs
-                        id       : ctrl.id,
-                        name     : field.name,
-                        class    : css.textarea,
-                        required : options.required,
+                            id,
+                            name  : field.name,
+                            class : css.textarea,
+                            required,
 
-                        // events
-                        oninput : m.withAttr("value", ctrl.resize.bind(null, options))
-                    },
-                    field.attrs || {}
-                ), options.data || "")
+                            oninput : m.withAttr("value", (value) => {
+                                vnode.state.resize(vnode.attrs, value);
+                            })
+                        },
+                        field.attrs || {}
+                    ),
+                    data || ""
+                )
             )
         );
     }

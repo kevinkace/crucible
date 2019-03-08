@@ -3,8 +3,10 @@ import m from "mithril";
 import config from "../../config";
 import prefix from "../../lib/prefix";
 
-import * as invalidMsg from "./invalid-msg.js";
-import * as scheduleBox from "./schedule-box.js";
+import invalidMsg from "./invalid-msg.js";
+import scheduleBox from "./schedule-box.js";
+
+import css from "./head.css";
 
 import arrowIcon from "../../icons/arrow.svg";
 import saveIcon from "../../icons/save.svg";
@@ -12,95 +14,95 @@ import publishIcon from "../../icons/publish.svg";
 import scheduleIcon from "../../icons/schedule.svg";
 import removeIcon from "../../icons/remove.svg";
 
-import css from "./head.css";
+export default {
+    view(vnode) {
+        const { content } = vnode.attrs;
+        const schedule = content.schedule;
+        const state    = content.get();
+        const locked   = config.locked;
 
-export function view(ctrl, options) {
-    var content  = options.content,
-        schedule = content.schedule,
-        state    = content.get(),
-        locked   = config.locked;
+        return m("div", { class : css.contentHd },
+            m("div", { class : css.main },
 
+                // Controls
+                m("div", { class : css.actions }, [
+                    m("a", {
+                            class    : css.back,
+                            title    : "Back to Listing",
+                            href     : prefix(`/${state.schema.key}`),
+                            oncreate : m.route.link
+                        },
+                        m.trust(arrowIcon),
+                        "Back"
+                    ),
 
-    return m("div", { class : css.contentHd },
-        m("div", { class : css.main },
-
-            // Controls
-            m("div", { class : css.actions }, [
-                m("a", {
-                        // Attrs
-                        class  : css.back,
-                        title  : "Back to Listing",
-                        href   : prefix("/listing/" + state.schema.key),
-                        config : m.route
-                    },
-                    m.trust(arrowIcon),
-                    "Back"
-                ),
-
-                m("button", {
-                        // Attrs
-                        class    : css.save,
-                        title    : "Save your changes",
-                        disabled : locked || !state.meta.dirty || null,
-
-                        // Events
-                        onclick : state.ui.saving ?
-                            null :
-                            content.save.bind(content)
-                    },
-                    m.trust(saveIcon),
-                    state.ui.saving ? "SAVING..." : "Save"
-                )
-            ]),
-
-            m("div", { class : css.publishing },
-                // Schedule
-                m("button", {
-                        // Attrs
-                        class : state.dates.validSchedule ? css.schedule : css.scheduleInvalid,
-                        title : "Schedule a publish",
-
-                        // Events
-                        onclick : content.toggleSchedule.bind(content, null)
-                    },
-                    m.trust(scheduleIcon)
-                ),
-
-                m("div", { class : css.publishContainer },
                     m("button", {
-                            // Attrs
-                            class    : css.publish,
-                            title    : (state.meta.status === "published") ? "Already Published" : "",
+                            class    : css.save,
+                            title    : "Save your changes",
+                            disabled : locked || !state.meta.dirty || null,
+
+                            onclick() {
+                                if (state.ui.saving) {
+                                    return;
+                                }
+
+                                content.save();
+                            }
+                        },
+                        m.trust(saveIcon),
+                        state.ui.saving ? "SAVING..." : "Save"
+                    )
+                ]),
+
+                m("div", { class : css.publishing },
+                    // Schedule
+                    m("button", {
+                            class : state.dates.validSchedule ? css.schedule : css.scheduleInvalid,
+                            title : "Schedule a publish",
+
+                            onclick() {
+                                content.toggleSchedule();
+                            }
+                        },
+                        m.trust(scheduleIcon)
+                    ),
+
+                    m("div", { class : css.publishContainer },
+                        m("button", {
+                                class    : css.publish,
+                                title    : (state.meta.status === "published") ? "Already Published" : "",
+                                disabled : locked || null,
+
+                                onclick() {
+                                    schedule.publish();
+                                }
+                            },
+                            m.trust(publishIcon),
+                            "Publish"
+                        ),
+                        state.form ?
+                            m(invalidMsg, { content : content }) :
+                            null
+                    ),
+
+                    m("button", {
+                            class    : css.unpublish,
                             disabled : locked || null,
 
-                            // Events
-                            onclick : schedule.publish.bind(schedule)
+                            onclick() {
+                                schedule.unpublish();
+                            }
                         },
-                        m.trust(publishIcon),
-                        "Publish"
-                    ),
-                    !state.form ?
-                        null :
-                        m.component(invalidMsg, { content : content })
+                        m.trust(removeIcon),
+                        "Unpublish"
+                    )
                 ),
 
-                m("button", {
-                        // Attrs
-                        class    : css.unpublish,
-                        disabled : locked || null,
-
-                        // Events
-                        onclick : schedule.unpublish.bind(schedule)
-                    },
-                    m.trust(removeIcon),
-                    "Unpublish"
-                )
-            ),
-
-            // Schedule Pop Up
-            !state.ui.schedule ?
-                null :
-                m.component(scheduleBox, options)
-        )
-    );
-}
+                // Schedule Pop Up
+                state.ui.schedule ?
+                    m(scheduleBox, vnode.attrs) :
+                    null
+            )
+        );
+    }
+};

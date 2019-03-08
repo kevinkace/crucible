@@ -3,24 +3,24 @@ import formatDate from "date-fns/format";
 
 import css from "./head.css";
 
-var DEFAULT_START_TIME = "00:00",
-    DEFAULT_END_TIME   = "23:59",
+const DEFAULT_START_TIME = "00:00";
+const DEFAULT_END_TIME   = "23:59";
 
-    DATE_FORMAT = "YYYY-MM-DD",
-    TIME_FORMAT = "HH:mm",
+const DATE_FORMAT = "YYYY-MM-DD";
+const TIME_FORMAT = "HH:mm";
 
-    TIMESTAMP_FORMAT   = "x";
+const TIMESTAMP_FORMAT   = "x";
 
 function scheduleStr(side, date, time) {
-    if(!date) {
+    if (!date) {
         return null;
     }
 
-    if(!time) {
+    if (!time) {
         time = side === "start" ? DEFAULT_START_TIME : DEFAULT_END_TIME;
     }
 
-    return date + " " + time;
+    return `${date} ${time}`;
 }
 
 function timestampFromStr(str) {
@@ -28,7 +28,7 @@ function timestampFromStr(str) {
 }
 
 function timestamp(side, date, time) {
-    var str = scheduleStr(side, date, time);
+    const str = scheduleStr(side, date, time);
 
     return str ? timestampFromStr(str) : null;
 }
@@ -37,20 +37,40 @@ function timestamp(side, date, time) {
 // All transformations to and from the date+time input fields will be
 // handled by this controller.
 
-export function controller(options) {
-    var ctrl = this;
+const scheduleInput = {
+    view(vnode) {
+        const { id, inputs, onchange, side, part, ctx } = vnode.attrs;
 
-    ctrl.content = options.content;
+        return m("input", {
+            id,
+            type  : part,
+            class : inputs.valid ? css.date : css.invalidDate,
+            value : inputs[side][part],
 
-    ctrl.inputs = null;
-    ctrl.ts     = null;
+            oninput : m.withAttr("value", (value) => {
+                onchange.call(ctx, side, part, value);
+            })
+        });
+    }
+};
 
-    ctrl.makeSchedule = function() {
-        var dates = ctrl.content.get().dates,
-            pub   = dates.published_at,
-            unpub = dates.unpublished_at;
+export default {
+    oninit(vnode) {
+        vnode.state.content = vnode.attrs.content;
 
-        ctrl.inputs = {
+        vnode.state.inputs = null;
+        vnode.state.ts     = null;
+
+        // Init
+        vnode.state.makeSchedule();
+    },
+
+    makeSchedule() {
+        const dates = this.content.get().dates;
+        const pub   = dates.published_at;
+        const unpub = dates.unpublished_at;
+
+        this.inputs = {
             valid : dates.validSchedule,
 
             start : {
@@ -63,73 +83,62 @@ export function controller(options) {
                 time : unpub ? formatDate(unpub, TIME_FORMAT) : DEFAULT_END_TIME
             }
         };
-    };
+    },
 
-    function determineTimestamps() {
-        ctrl.ts = {
-            published_at   : timestamp("start", ctrl.inputs.start.date, ctrl.inputs.start.time),
-            unpublished_at : timestamp("end",   ctrl.inputs.end.date,   ctrl.inputs.end.time)
-        };
-    }
+    onchange(side, part, val) {
+        const { inputs, content } = this;
 
-    ctrl.onChange = function(side, part, val) {
-        var dateField,
+        let dateField,
             ts;
 
+        function determineTimestamps() {
+            this.ts = {
+                published_at   : timestamp("start", inputs.start.date, inputs.start.time),
+                unpublished_at : timestamp("end",   inputs.end.date,   inputs.end.time)
+            };
+        }
+
         dateField = side === "start" ? "published" : "unpublished";
-        ctrl.inputs[side][part] = val;
+        inputs[side][part] = val;
 
-        determineTimestamps();
-        ts = ctrl.ts[dateField + "_at"];
+        determineTimestamps.call(this);
+        ts = this.ts[`${dateField}_at`];
 
-        ctrl.content.schedule.setDateField(dateField, ts);
-    };
+        content.schedule.setDateField(dateField, ts);
+    },
 
-    // Init
-    ctrl.makeSchedule();
-}
+    view(vnode) {
+        const { inputs, onchange } = vnode.state;
+        const schedule = vnode.state.content.schedule;
 
-function mScheduleInput(ctrl, id, side, part) {
-    return m("input", {
-        id    : id,
-        type  : part,
-        class : ctrl.inputs.valid ? css.date : css.invalidDate,
-        value : ctrl.inputs[side][part],
+        // Update schedule on redraw.
+        vnode.state.makeSchedule();
 
-        // Events
-        oninput : m.withAttr("value", ctrl.onChange.bind(ctrl, side, part))
-    });
-}
+        return m("div", { class : css.details },
+            m("div", { class : css.start },
+                m("p", m("label", { for : "published_at_date" }, "Publish at")),
 
-export function view(ctrl) {
-    var schedule = ctrl.content.schedule;
+                m("p", m(scheduleInput, { inputs, onchange, id : "published_at_date", side : "start", part : "date", ctx : vnode.state })),
+                m("p", m(scheduleInput, { inputs, onchange, id : "published_at_time", side : "start", part : "time", ctx : vnode.state }))
+            ),
+            m("div", { class : css.end },
+                m("p", m("label", { for : "unpublished_at_date" }, "Until (optional)")),
 
-    // Update schedule on redraw.
-    ctrl.makeSchedule();
+                m("p", m(scheduleInput, { inputs, onchange, id : "unpublished_at_date", side : "end", part : "date", ctx : vnode.state })),
+                m("p", m(scheduleInput, { inputs, onchange, id : "unpublished_at_time", side : "end", part : "time", ctx : vnode.state })),
+                m("p",
+                    m("button", {
+                            class : css.clearSchedule,
+                            title : "Clear schedule dates",
 
-    return m("div", { class : css.details },
-        m("div", { class : css.start },
-            m("p", m("label", { for : "published_at_date" }, "Publish at")),
-
-            m("p", mScheduleInput(ctrl, "published_at_date", "start", "date")),
-            m("p", mScheduleInput(ctrl, "published_at_time", "start", "time"))
-        ),
-        m("div", { class : css.end },
-            m("p", m("label", { for : "unpublished_at_date" }, "Until (optional)")),
-
-            m("p", mScheduleInput(ctrl, "unpublished_at_date", "end", "date")),
-            m("p", mScheduleInput(ctrl, "unpublished_at_time", "end", "time")),
-            m("p",
-                m("button", {
-                        class : css.clearSchedule,
-                        title : "Clear schedule dates",
-
-                        // Events
-                        onclick : schedule.clearSchedule.bind(schedule)
-                    },
-                    "clear schedule"
+                            onclick() {
+                                schedule.clearSchedule();
+                            }
+                        },
+                        "clear schedule"
+                    )
                 )
             )
-        )
-    );
-}
+        );
+    }
+};

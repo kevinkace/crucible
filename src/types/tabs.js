@@ -1,46 +1,44 @@
 import m from "mithril";
 import assign from "lodash.assign";
 
-import * as children from "./children";
+import children from "./children";
 import css from "./tabs.css";
 
 export default {
-    controller : function() {
-        var ctrl = this;
-
-        ctrl.tab = 0;
-
-        ctrl.switchtab = function(tab, e) {
-            e.preventDefault();
-
-            ctrl.tab = tab;
-        };
+    oninit(vnode) {
+        vnode.state.tabIdx = 0;
     },
 
-    view : function(ctrl, options) {
-        var tabs   = options.field.children || [];
-        
-        return m("div", { class : options.class },
+    view(vnode) {
+        const { tabIdx } = vnode.state;
+        const { field, class : style, data, path } = vnode.attrs;
+        const tabs = field.children || [];
+
+        return m("div", { class : style },
             m("div", { class : css.nav },
-                tabs.map(function(tab, idx) {
-                    return m("a", {
-                            class   : css[idx === ctrl.tab ? "activetab" : "tab"],
-                            href    : "#" + idx,
-                            onclick : ctrl.switchtab.bind(ctrl, idx)
-                        }, tab.name
-                    );
-                })
+                tabs.map((tab, idx) =>
+                    m("a", {
+                            class : idx === tabIdx ? css.activeTab : css.tab,
+                            href  : `#${idx}`,
+                            onclick(e) {
+                                e.preventDefault();
+                                vnode.state.tabIdx = idx;
+                            }
+                        },
+                        tab.name
+                    )
+                )
             ),
-            tabs.map(function(tab, idx) {
-                return m("div", { class : css[idx === ctrl.tab ? "activebody" : "body"] },
-                    m.component(children, assign({}, options, {
+            tabs.map((tab, idx) =>
+                m("div", { class : idx === tabIdx ? css.activeBody : css.body },
+                    m(children, assign({}, vnode.attrs, {
                         class  : false,
                         fields : tab.children,
-                        data   : options.data && options.data[tab.key],
-                        path   : options.path.concat(tab.key)
+                        data   : data && data[tab.key],
+                        path   : path.concat(tab.key)
                     }))
-                );
-            })
+                )
+            )
         );
     }
 };

@@ -1,9 +1,12 @@
 import url from "url";
 import assign from "lodash.assign";
-import join from "url-join";
 
-export var root = url.parse(document.baseURI).pathname,
-           icons = join(document.baseURI, "/gen/icons.svg"),
-           title = document.title;
+const root = url.parse(document.baseURI).pathname;
+const title = document.title;
 
 export default assign({}, window.crucible || {});
+
+export {
+    root as root,
+    title as title
+};

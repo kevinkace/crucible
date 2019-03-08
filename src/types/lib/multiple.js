@@ -1,68 +1,64 @@
 import m from "mithril";
 import assign from "lodash.assign";
 
-import id from "./id";
+import getId from "./getId";
 import label from "./label";
 
 /**
  * Examples of `multiple` types include `checkbox.js` and `radio.js`,
- * in both cases you're very likely or certain to have multiple inputs 
+ * in both cases you're very likely or certain to have multiple inputs
  * defined in a single field definition. (See README for examples.)
  */
 
 export default function(args, view) {
     return {
-        controller : function(options) {
-            var ctrl = this;
-
-            ctrl.id = id(options);
-
-            // Update data object w/ default status of the field (if set)
-
-
-            // Figure out selected status for children
-            ctrl.selected = function(opts) {
-                var field  = opts.field,
-                    values = opts.data,
-                    matches;
-
-                if(!values) {
-                    return field.children;
-                }
-
-                matches = field.children.filter(function(opt) {
-                    if(!args.multiple) {
-                        return opt.value === values;
-                    }
-
-                    return values[opt.key] === opt.value;
-                });
-
-                if(!args.multiple && matches.length) {
-                    matches.length = 1;
-                }
-
-                return field.children.map(function(opt) {
-                    return assign({}, opt, {
-                        selected : matches.indexOf(opt) > -1
-                    });
-                });
-            };
-
-            ctrl.value = function(opts, key, value) {
-                return opts.update(
-                    args.multiple ? opts.path.concat(key) : opts.path,
-                    value
-                );
-            };
+        oninit(vnode) {
+            vnode.state.id = getId(vnode.attrs);
         },
 
-        view : function(ctrl, options) {
-            var children = ctrl.selected(options);
-            
-            return m("div", { class : options.class },
-                label(ctrl, options, children),
-                view(ctrl, options, children)
+        // Figure out selected status for children
+        selected(attrs) {
+            const field  = attrs.field;
+            const values = attrs.data;
+
+            let matches;
+
+            if (!values) {
+                return field.children;
+            }
+
+            matches = field.children.filter(opt =>
+                (!args.multiple ?
+                    opt.value === values :
+                    values[opt.key] === opt.value)
+            );
+
+            if (!args.multiple && matches.length) {
+                matches.length = 1;
+            }
+
+            return field.children.map(opt =>
+                assign({}, opt, {
+                    selected : matches.indexOf(opt) > -1
+                })
+            );
+        },
+
+        value(opts, key, value) {
+            return opts.update(
+                args.multiple ? opts.path.concat(key) : opts.path,
+                value
+            );
+        },
+
+        view(vnode) {
+            const { class : style, field } = vnode.attrs;
+            const { id } = vnode.state;
+            const children = vnode.state.selected(vnode.attrs);
+
+            return m("div", { class : style },
+                m(label, { id, field }),
+                view(vnode.state, vnode.attrs, children)
             );
         }
     };

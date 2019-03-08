@@ -5,16 +5,16 @@ import each from "lodash.foreach";
 import parallel from "run-parallel";
 
 import join from "url-join";
-    
-import id from "./lib/id";
-import label from "./lib/label";
 
-import removeIcon from "../icons/remove.svg";
+import getId from "./lib/getId";
+import label from "./lib/label";
 
 import css from "./upload.css";
 
 // Load fetch polyfill
 import "whatwg-fetch";
+
+import removeIcon from "../icons/remove.svg";
 
 function status(response) {
     // Assume opaque responses are cool, because who knows?
@@ -23,247 +23,245 @@ function status(response) {
 
 // Helper
 function checkStatus(response) {
-    var error;
-    
-    if(status(response)) {
+    let error;
+
+    if (status(response)) {
         return response;
     }
-    
+
     error = new Error(response.statusText);
     error.response = response;
-    
+
     throw error;
 }
 
 function name(remote) {
-    var url = new URL(remote);
+    const url = new URL(remote);
 
     return url.pathname.split("/").pop();
 }
 
 export default {
-    controller : function(options) {
-        var ctrl = this;
-        
-        if(!options.field.ws) {
+    oninit(vnode) {
+        if (!vnode.attrs.field.ws) {
             console.error("No ws for upload field");
             // throw new Error("Must define a ws for upload fields");
         }
-        
-        ctrl.id = id(options);
-        
+
+        vnode.state.id = getId(vnode.attrs);
+
         // Drag-n-drop state tracking
-        ctrl.dragging  = false;
-        ctrl.uploading = false;
-        
-        // Options caching
-        ctrl.options = options;
-        
-        if(options.data) {
-            if(typeof options.data === "string") {
-                options.data = [ options.data ];
+        vnode.state.dragging  = false;
+        vnode.state.uploading = false;
+
+        // attrs caching...?
+        vnode.state.attrs = vnode.attrs;
+
+        if (vnode.attrs.data) {
+            if (typeof vnode.attrs.data === "string") {
+                vnode.attrs.data = [ vnode.attrs.data ];
             }
-            
-            ctrl.files = options.data.map(function(remote) {
-                return {
+
+            vnode.state.files = vnode.attrs.data
+                .map(remote => ({
                     name     : name(remote),
                     uploaded : true,
                     remote   : remote
-                };
-            });
+                }));
         } else {
-            ctrl.files = [];
+            vnode.state.files = [];
         }
-                
-        // Event handlers
-        ctrl.remove = function(idx, e) {
-            e.preventDefault();
-            
-            ctrl.files.splice(idx, 1);
-            
-            ctrl._update();
-        };
-        
-        ctrl.dragon = function(e) {
-            e.preventDefault();
+    },
 
-            if(ctrl.dragging) {
-                m.redraw.strategy("none");
+    onbeforeupdate(vnode) {
+        // dragging is false -> so yes redraw, or
+        // dragging is 2 -> so no redraw (to account for dragon getting continuously called)
+        if (vnode.state.dragging !== 1) {
+            return !vnode.state.dragging;
+        }
 
-                return;
-            }
-            
-            // Don't show this as a drag target if there's already something there
-            // and it's not a multiple field
-            if(ctrl.files.length && !ctrl.options.field.multiple) {
-                m.redraw.strategy("none");
-                
-                return;
-            }
-            
-            ctrl.dragging = true;
-        };
+        // dragging is 1, so redraw, and increment dragging so no continuous redrawing due to dragon
+        vnode.state.dragging++;
 
-        ctrl.dragoff = function() {
-            ctrl.dragging = false;
-        };
+        return true;
+    },
 
-        ctrl.drop = function(e) {
-            var dropped;
-            
-            ctrl.dragoff();
-            e.preventDefault();
-            
-            // Must delete existing file before dragging on more
-            if(ctrl.files.length && !ctrl.options.field.multiple) {
-                return;
-            }
-            
-            // Filter out non-images
-            dropped = filter((e.dataTransfer || e.target).files, function(file) {
-                return file.type.indexOf("image/") === 0;
-            });
-            
-            if(ctrl.options.field.multiple) {
-                ctrl.files = ctrl.files.concat(dropped);
-            } else {
-                ctrl.files = dropped.slice(-1);
-            }
-            
-            // Load all the images in parallel so we can show previews
-            parallel(
-                ctrl.files
-                .filter(function(file) {
-                    return !file.uploaded;
-                })
-                .map(function(file) {
-                    return function(callback) {
-                        var reader = new FileReader();
+    remove(idx) {
+        this.files.splice(idx, 1);
 
-                        reader.onload = function(result) {
+        this._update();
+    },
+
+    // this gets fired continuously when hovering over drop area
+    // on first fire, dragging is false, so it gets set to 1
+    // on subsequent fires it will be > 1 (from onbeforeupdate)
+    dragon() {
+        this.dragging = this.dragging || 1;
+    },
+
+    // reset to false;
+    dragoff() {
+        this.dragging = false;
+    },
+
+    drop(droppedFiles) {
+        const { files, attrs } = this;
+
+        let dropped;
+
+        this.dragoff();
+
+        // Must delete existing file before dragging on more
+        if (files.length && !attrs.field.multiple) {
+            return;
+        }
+
+        // Filter out non-images
+        dropped = filter(droppedFiles, file =>
+            file.type.indexOf("image/") === 0
+        );
+
+        if (attrs.field.multiple) {
+            this.files = files.concat(dropped);
+        } else {
+            this.files = dropped.slice(-1);
+        }
+
+        // Load all the images in parallel so we can show previews
+        parallel(
+            this.files
+                .filter(file => !file.uploaded)
+                .map(file =>
+                    callback => {
+                        const reader = new FileReader();
+
+                        reader.onload = result => {
                             file.src = result.target.result;
-                            
+
                             callback();
                         };
 
                         reader.readAsDataURL(file);
-                    };
-                }),
-                
-                function(err) {
-                    if(err) {
-                        return console.error(err);
                     }
-                    
-                    m.redraw();
-                    
-                    return ctrl._upload();
+                ),
+
+            err => {
+                if (err) {
+                    return console.error(err);
                 }
-            );
-        };
-        
-        // Update w/ the result, but removing anything that hasn't been uploaded
-        ctrl._update = function() {
-            var files = ctrl.files.filter(function(file) {
-                    return file.uploaded && file.remote;
-                }).map(function(file) {
-                    return file.remote;
-                });
-            
-            ctrl.options.update(
-                ctrl.options.path,
-                ctrl.options.field.multiple ? files : files[0]
-            );
-        };
-        
-        // Upload any files that haven't been uploaded yet
-        ctrl._upload = function() {
-            var files = ctrl.files.filter(function(file) {
-                    return !file.uploaded && !file.uploading;
-                });
-            
-            if(!files.length) {
-                return;
-            }
-            
-            fetch(ctrl.options.field.ws)
-            .then(checkStatus)
-            .then(function(response) {
-                return response.json();
-            })
-            .then(function(config) {
-                files.forEach(function(file) {
-                    file.uploading = true;
-                });
-                
-                // queue a redraw here so we can show uploading status
+
                 m.redraw();
-                
-                return Promise.all(
-                    files.map(function(file) {
-                        var data = new FormData();
-                        
-                        each(config.fields, function(val, key) {
-                            data.append(key, val);
-                        });
-                        
-                        data.append("Content-Type", file.type);
-                        
-                        each(ctrl.options.field.headers || {}, function(value, key) {
-                            data.append(key, value);
-                        });
-                        
-                        data.append(config.filefield, file);
-                        
-                        return fetch(config.action, {
-                            method : "post",
-                            body   : data,
-                            mode   : "cors"
-                        })
-                        .then(function(response) {
-                            if(status(response)) {
-                                file.uploaded  = true;
-                                file.uploading = false;
-                                file.remote    = join(config.action, config.fields.key.replace("${filename}", file.name));
-                            }
-                            
-                            // queue a redraw as each file completes/fails
-                            m.redraw();
-                            
-                            return file;
-                        });
-                    })
-                );
-            })
-            .then(ctrl._update)
-            .catch(function(error) {
-                // TODO: error-handling
-                console.error(error);
-            });
-        };
+
+                return this._upload();
+            }
+        );
     },
 
-    view : function(ctrl, options) {
-        var field  = options.field;
-        
-        ctrl.options = options;
+    // Update w/ the result, but removing anything that hasn't been uploaded
+    _update() {
+        const { attrs } = this;
+        const files = this.files
+            .filter(file => file.uploaded && file.remote)
+            .map(file => file.remote);
 
-        return m("div", { class : options.class },
-            label(ctrl, options),
+        attrs.update(
+            attrs.path,
+            attrs.field.multiple ? files : files[0]
+        );
+    },
+
+    // Upload any files that haven't been uploaded yet
+    _upload() {
+        const files = this.files.filter(file => !file.uploaded && !file.uploading);
+
+        if (!files.length) {
+            return;
+        }
+
+        fetch(this.attrs.field.ws)
+        .then(checkStatus)
+        .then(response => response.json())
+        .then(config => {
+            files.forEach(file => {
+                file.uploading = true;
+            });
+
+            // queue a redraw here so we can show uploading status
+            m.redraw();
+
+            return Promise.all(
+                files.map(file => {
+                    const body = new FormData();
+
+                    each(config.fields, (val, key) => {
+                        body.append(key, val);
+                    });
+
+                    body.append("Content-Type", file.type);
+
+                    each(this.attrs.field.headers || {}, (value, key) => {
+                        body.append(key, value);
+                    });
+
+                    body.append(config.filefield, file);
+
+                    return fetch(config.action, {
+                        method : "post",
+                        mode   : "cors",
+                        body
+                    })
+                    .then(response => {
+                        if (status(response)) {
+                            file.uploaded  = true;
+                            file.uploading = false;
+                            file.remote    = join(config.action, config.fields.key.replace("${filename}", file.name));
+                        }
+
+                        // queue a redraw as each file completes/fails
+                        m.redraw();
+
+                        return file;
+                    });
+                })
+            );
+        })
+        .then(() => this._update())
+        .catch(error => {
+            // TODO: error-handling
+            console.error(error);
+        });
+    },
+
+    view(vnode) {
+        const { field } = vnode.attrs;
+        const { dragging, id, files } = vnode.state;
+
+        return m("div", { class : vnode.attrs.class },
+            m(label, { id, field }),
             m("div", {
-                    // Attrs
-                    class : css[ctrl.dragging ? "highlight" : "target"],
-                    
-                    // Events
-                    ondragover  : ctrl.dragon,
-                    ondragleave : ctrl.dragoff,
-                    ondragend   : ctrl.dragoff,
-                    ondrop      : ctrl.drop
+                    class : css[dragging ? "highlight" : "target"],
+
+                    ondragover(e) {
+                        e.preventDefault();
+                        vnode.state.dragon();
+                    },
+                    ondragleave(e) {
+                        e.preventDefault();
+                        vnode.state.dragoff();
+                    },
+                    ondragend(e) {
+                        e.preventDefault();
+                        vnode.state.dragoff();
+                    },
+                    ondrop(e) {
+                        e.preventDefault();
+                        vnode.state.drop((e.dataTransfer || e.target).files);
+                    }
                 },
-                ctrl.files.length ?
+                files.length ?
                     m("ul", { class : css.queue },
-                        ctrl.files.map(function(file, idx) {
-                            return m("li", { class : css.queued },
+                        files.map((file, idx) =>
+                            m("li", { class : css.queued },
                                 m("div", { class : css.image },
                                     m("img", {
                                         class : css.img,
@@ -277,8 +275,8 @@ export default {
                                         null,
                                     file.uploaded ?
                                         m("input", {
-                                            value   : file.remote,
-                                            onclick : function(e) {
+                                            value : file.remote,
+                                            onclick(e) {
                                                 e.target.select();
                                             }
                                         }) :
@@ -286,20 +284,21 @@ export default {
                                 ),
                                 m("div", { class : css.actions },
                                     m("button", {
-                                            // Attrs
                                             class : css.remove,
                                             title : "Remove",
-                                            
-                                            // Events
-                                            onclick : ctrl.remove.bind(ctrl, idx)
+
+                                            onclick(e) {
+                                                e.preventDefault();
+                                                vnode.state.remove(idx, e);
+                                            }
                                         },
                                         m.trust(removeIcon)
                                     )
                                 )
-                            );
-                        })
+                            )
+                        )
                     ) :
-                        
+
                     m("p", { class : css.instructions }, field.multiple ?
                         "Drop files here to upload" :
                         "Drop a file here to upload"

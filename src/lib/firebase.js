@@ -1,7 +1,7 @@
 import Firebase from "firebase";
 import config from "../config";
 
-var firebase = new Firebase(config.firebase);
+const firebase = new Firebase(config.firebase);
 
 firebase.TIMESTAMP = Firebase.ServerValue.TIMESTAMP;
 

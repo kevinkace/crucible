@@ -4,7 +4,8 @@ var chokidar = require("chokidar"),
     shell    = require("shelljs"),
 
     files = {
-        "./src/pages/schema-edit/parse-schema.js" : "./gen/parse-schema.js"
+        "./src/pages/schema-edit/parse-schema.js" : "./gen/parse-schema.js",
+        "./build/external/firebase-2.4.2.js"      : "./gen/firebase-2.4.2.js"
     };
 
 exports.watch = function() {

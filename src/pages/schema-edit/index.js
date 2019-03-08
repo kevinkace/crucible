@@ -3,176 +3,180 @@ import capitalize from "lodash.capitalize";
 
 import watch from "../../lib/watch";
 import db from "../../lib/firebase";
-import prefix from "../../lib/prefix";
 
-import Content from "../content-edit/content-state";
+import Content from "../content-edit/Content";
 
-import * as editor from "./editor";
-import * as children from "../../types/children";
-import * as layout from "../layout/index";
-
-import parse from "./parse-schema.js";
+import editor from "./editor";
+import children from "../../types/children";
+import layout, { layoutCss } from "../layout";
 
 import css from "./schema-edit.css";
-import flexCss from "../../flex.css";
 
-export function controller() {
-    var ctrl   = this,
-        id     = m.route.param("schema"),
-        ref    = db.child("schemas/" + id),
-        worker = new Worker(parse);
+import parseSchema from "./parse-schema.js";
 
-    ctrl.ref     = ref;
-    ctrl.schema  = null;
-    ctrl.worker  = worker;
-    ctrl.data    = {};
-    ctrl.preview = {
-        valid : true,
-        value : ""
-    };
+export default {
+    oninit(vnode) {
+        const schemaName = m.route.param("schema");
+        const schemaRef  = db.child(`schemas/${schemaName}`);
+        const worker     = new Worker(parseSchema);
 
-    // Get Firebase data
-    ref.on("value", function(snap) {
-        ctrl.schema = snap.val();
+        vnode.state.schemaRef = schemaRef;
+        vnode.state.schema    = null;
+        vnode.state.worker    = worker;
+        vnode.state.data      = {};
+        vnode.state.preview   = {
+            valid : true,
+            value : ""
+        };
 
-        if(!ctrl.preview.value) {
-            ctrl.preview.value = ctrl.schema.preview || "";
-        }
+        // Get Firebase data
+        schemaRef.on("value", snap => {
+            vnode.state.schema = snap.val();
 
-        // Ensure that we run it through the worker asap
-        if(ctrl.schema.source) {
-            worker.postMessage(ctrl.schema.source);
-        }
+            if (!vnode.state.preview.value) {
+                vnode.state.preview.value = vnode.state.schema.preview || "";
+            }
 
-        m.redraw();
-    });
+            // Ensure that we run it through the worker asap
+            if (vnode.state.schema.source) {
+                worker.postMessage(vnode.state.schema.source);
+            }
 
-    // Event Handlers
-    ctrl.previewChanged = function(e) {
-        var el = e.target;
+            m.redraw();
+        });
 
-        ctrl.preview.valid = el.validity.valid;
-        ctrl.preview.value = el.value;
+        // Listen for the worker to finish and update firebase
+        worker.addEventListener("message", e => {
+            const data = JSON.parse(e.data);
 
-        ref.child("preview").set(el.value);
-    };
+            if (data.error) {
+                vnode.state.error = true;
+            } else {
+                schemaRef.child("fields").set(data.config);
+                vnode.state.error = false;
+            }
 
-    ctrl.slugChanged = function(value) {
-        ref.child("slug").set(value);
-    };
+            m.redraw();
+        });
 
-    // Listen for the worker to finish and update firebase
-    worker.addEventListener("message", function(e) {
-        var data = JSON.parse(e.data);
+        watch(schemaRef);
+    },
 
-        if(data.error) {
-            ctrl.error = true;
-        } else {
-            ref.child("fields").set(data.config);
-            ctrl.error = false;
-        }
+    previewChanged(e) {
+        const el = e.target;
 
-        m.redraw();
-    });
+        this.preview.valid = el.validity.valid;
+        this.preview.value = el.value;
 
-    watch(ref);
-}
+        this.schemaRef.child("preview").set(el.value);
+    },
 
-export function view(ctrl) {
-    var content = new Content(),
-        state   = content.get();
+    slugChanged(value) {
+        this.schemaRef.child("slug").set(value);
+    },
 
-    if(!ctrl.schema) {
-        return m.component(layout, { loading : true });
-    }
+    view(vnode) {
+        const content = new Content();
+        const state   = content.get();
+        const {
+            schema, schemaRef,
+            worker, error,
+            preview
+        } = vnode.state;
 
-    return m.component(layout, {
-        title   : "Edit Schema: " + capitalize(ctrl.schema.name),
-        content : m("div", { class : layout.css.content },
-            ctrl.error ?
-                m("p", { class : css.error }, ctrl.error) :
-                null,
+        return !schema ?
+            m(layout, { loading : true }) :
 
-            m("div", { class : layout.css.body },
-                m("h1", { class : css.title }, "Edit Schema: " + capitalize(ctrl.schema.name)),
+            m(layout, { title : `Edit Schema: ${capitalize(schema.name)}` },
+                m("div", { class : layoutCss.content },
+                    error ?
+                        m("p", { key : Date.now(), class : css.error }, error) :
+                        null,
 
-                m("div", { class : css.contentWidth },
+                    m("div", { class : layoutCss.body },
+                        m("h1", { class : css.title }, `Edit Schema: ${capitalize(schema.name)}`),
 
-                    m("div", { class : css.definitions },
-                        m("h2", "Field Definitions"),
-                        m("div", { class : css.editor },
-                            m.component(editor, {
-                                ref    : ctrl.ref,
-                                worker : ctrl.worker,
-                                source : ctrl.schema.source || "{\n\n}"
-                            })
-                        )
-                    ),
+                        m("div", { class : css.contentWidth },
 
-                    m("div", { class : css.preview },
-                        m("h2", "Preview"),
-                        m("div", { class : css.fields },
-                            m.component(children, {
-                                fields : ctrl.schema.fields,
-                                class  : css.children,
-                                data   : state.fields || {},
-                                path   : [ "fields" ],
-                                state  : state.fields,
+                            m("div", { class : css.definitions },
+                                m("h2", "Field Definitions"),
+                                m("div", { class : css.editor },
+                                    m(editor, {
+                                        ref    : schemaRef,
+                                        source : schema.source || "{\n\n}",
+                                        worker
+                                    })
+                                )
+                            ),
 
-                                update  : content.setField.bind(content),
-                                content : content,
+                            m("div", { class : css.preview },
+                                m("h2", "Preview"),
+                                m("div", { class : css.fields },
+                                    m(children, {
+                                        fields : schema.fields,
+                                        class  : css.children,
+                                        data   : state.fields || {},
+                                        path   : [ "fields" ],
+                                        state  : state.fields,
 
-                                registerHidden : content.hidden.register.bind(content.hidden)
-                            })
-                        )
-                    ),
+                                        update  : content.setField.bind(content),
+                                        content : content,
 
-                    m("div", { class : css.details },
-                        m("h2", "Details"),
-                        m("label", { class : css.genSlugs },
-                            "Generate slugs for entries? ",
-                            m("input", {
-                                // Attrs
-                                class   : css.slug,
-                                type    : "checkbox",
-                                checked : ctrl.schema.slug,
+                                        registerHidden : content.hidden.register.bind(content.hidden)
+                                    })
+                                )
+                            ),
 
-                                // Events
-                                onchange : m.withAttr("checked", ctrl.slugChanged)
-                            })
-                        ),
-                        m("div", { class : css.urlBase },
-                            m("label", { for : "preview" }, "Preview URL base: "),
-                            m("span", { class : css.url },
-                                m("input", {
-                                    // Attrs
-                                    id    : "preview",
-                                    class : css[ctrl.preview.valid ? "urlInputPreview" : "urlInputError"],
-                                    type  : "url",
-                                    value : ctrl.preview.value || "",
+                            m("div", { class : css.details },
+                                m("h2", "Details"),
+                                m("label", { class : css.genSlugs },
+                                    "Generate slugs for entries? ",
+                                    m("input", {
+                                        class   : css.slug,
+                                        type    : "checkbox",
+                                        checked : schema.slug,
 
-                                    // Events
-                                    oninput : ctrl.previewChanged,
+                                        onchange : m.withAttr("checked", value => {
+                                            vnode.state.slugChanged(value);
+                                        })
+                                    })
+                                ),
+                                m("div", { class : css.urlBase },
+                                    m("label", { for : "preview" }, "Preview URL base: "),
+                                    m("span", { class : css.url },
+                                        m("input", {
+                                            id    : "preview",
+                                            class : css[preview.valid ? "urlInputPreview" : "urlInputError"],
+                                            type  : "url",
+                                            value : preview.value || "",
 
-                                    // Config Fn
-                                    config : function(el, init) {
-                                        if(init) {
-                                            return;
-                                        }
+                                            oninput(e) {
+                                                vnode.state.previewChanged(e);
+                                            },
 
-                                        ctrl.preview.valid = el.validity.valid;
-                                    }
-                                }),
-                                m("p", { class : css.previewUrl },
-                                    ctrl.preview.value ?
-                                        ctrl.preview.value + "-0IhUBgUFfhyLQ2m6s5x" :
-                                        null
+                                            // Config Fn
+                                            // todo: does this work!??
+                                            onbeforeupdate({ dom }) {
+                                                if (!vnode.state.prevInit) {
+                                                    return;
+                                                }
+
+                                                vnode.state.prevInit = true;
+
+                                                preview.valid = dom.validity.valid;
+                                            }
+                                        }),
+                                        m("p", { class : css.previewUrl },
+                                            preview.value ?
+                                                `${preview.value}-0IhUBgUFfhyLQ2m6s5x` :
+                                                null
+                                        )
+                                    )
                                 )
                             )
                         )
                     )
                 )
-            )
-        )
-    });
-}
+            );
+    }
+};

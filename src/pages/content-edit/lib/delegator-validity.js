@@ -5,8 +5,8 @@ import name from "../name.js";
 
 import css from "../invalid-msg.css";
 
-function reqPrefix(name) {
-    return "Required: " + name;
+function reqPrefix(_name) {
+    return `Required: ${_name}`;
 }
 
 export default function Validity(content) {
@@ -17,59 +17,59 @@ export default function Validity(content) {
 Validity.prototype = {
 
     // Private functions.
-    _show : function() {
-        var wasInvalid = this.content.get().ui.invalid;
+    _show() {
+        const wasInvalid = this.content.get().ui.invalid;
 
         this.content.toggleInvalid(true);
-        if(!wasInvalid) {
+        if (!wasInvalid) {
             m.redraw(); // Only do once; avoid superfluous redraws.
         }
     },
 
-    _hide : function() {
+    _hide() {
         // CSS transition does the rest.
         this.content.toggleInvalid(false);
         m.redraw();
     },
 
     // Public
-    debounceFade : function() {
-        var self = this;
-        
+    debounceFade() {
+        const self = this;
+
         return debounce(
-            self._hide.bind(self), 
+            self._hide.bind(self),
             100
         );
     },
 
-    attachInputHandlers : function() {
-        var self = this,
-            form = this.content.get().form.el;
+    attachInputHandlers() {
+        const self = this;
+        const form = this.content.get().form.el;
 
-        if(self.handlersAttached) {
+        if (self.handlersAttached) {
             return;
         }
 
         self.handlersAttached = true;
 
-        // Irritatingly, this attachment had to be delayed like this because the 
+        // Irritatingly, this attachment had to be delayed like this because the
         // form's `config` function was running before the whole DOM tree was rendered,
         // so we were getting an incomplete list of inputs previously.
-        form.querySelectorAll("input, textarea, select").forEach(function(formInput) {
-            formInput.addEventListener("invalid", function(evt) {
-                evt.target.classList.add(css.highlightInvalid);
-                self.registerInvalidField(evt.target.name);
+        form.querySelectorAll("input, textarea, select").forEach(formInput => {
+            formInput.addEventListener("invalid", e => {
+                e.target.classList.add(css.highlightInvalid);
+                self.registerInvalidField(e.target.name);
             });
 
-            formInput.addEventListener("focus", function(evt) {
-                evt.target.classList.remove(css.highlightInvalid);
-                self.onFormFocus(evt); // focus doesn't bubble, so we listen to all the inputs for this.
+            formInput.addEventListener("focus", e => {
+                e.target.classList.remove(css.highlightInvalid);
+                self.onFormFocus(e); // focus doesn't bubble, so we listen to all the inputs for this.
             });
         });
     },
 
-    checkForm : function() {
-        var state = this.content.get();
+    checkForm() {
+        const state = this.content.get();
 
         this.attachInputHandlers();
         state.form.valid = state.form.el.checkValidity();
@@ -77,47 +77,46 @@ Validity.prototype = {
         return state.form.valid;
     },
 
-    registerInvalidField : function(name) {
-        this.addInvalidField(name);
+    registerInvalidField(_name) {
+        this.addInvalidField(_name);
         this._show();
         this.debounceFade();
     },
 
-    addInvalidField : function(name) {
-        var prefixedName = reqPrefix(name);
-
-        this.addInvalidMessage(prefixedName);
+    addInvalidField(_name) {
+        this.addInvalidMessage(reqPrefix(_name));
     },
 
-    addInvalidMessage : function(msg) {
-        var state = this.content.get();
-           
-        if(state.form.invalidMessages.indexOf(msg) > -1) {
+    addInvalidMessage(msg) {
+        const state = this.content.get();
+
+        if (state.form.invalidMessages.indexOf(msg) > -1) {
             return;
         }
 
         state.form.invalidMessages.push(msg);
     },
 
-    reset : function() {
-        var state = this.content.get();
+    reset() {
+        const state = this.content.get();
 
         state.form.valid = true;
         state.form.invalidMessages = [];
         this.content.toggleInvalid(false);
     },
 
-    onFormFocus : function() {
-        if(!this.content.get().form.valid) {
+    onFormFocus() {
+        if (!this.content.get().form.valid) {
             this.debounceFade();
         }
     },
 
-    checkSchedule : function() {
-        var state = this.content.get(),
-            pub   = state.dates.published_at,
-            unpub = state.dates.unpublished_at,
-            valid;
+    checkSchedule() {
+        const state = this.content.get();
+        const pub   = state.dates.published_at;
+        const unpub = state.dates.unpublished_at;
+
+        let valid;
 
         valid = (!pub && !unpub) || // No schedule.
             (pub && !unpub)      || // Only have a pub date,
@@ -127,13 +126,14 @@ Validity.prototype = {
         state.dates.validSchedule = valid;
     },
 
-    isValidSave : function() {
-        var STATUS  = this.content.schedule.STATUS,
-            state   = this.content.get(),
-            isValid = true,
+    isValidSave() { // eslint-disable-line max-statements
+        const STATUS  = this.content.schedule.STATUS;
+        const state   = this.content.get();
+
+        let isValid = true,
             requiresValid;
 
-        if(state.meta.name === name(state.schema, {})) {
+        if (state.meta.name === name(state.schema, {})) {
             // All saves must have a unique name.
             this.addInvalidMessage("Entry must have a title/name.");
             isValid = false;
@@ -142,21 +142,23 @@ Validity.prototype = {
         this.content.schedule.updateStatus();
 
         requiresValid = [ STATUS.SCHEDULED, STATUS.PUBLISHED ].indexOf(state.meta.status) > -1;
-        if(requiresValid) {
+
+        if (requiresValid) {
             this.checkForm();
 
-            if(!state.form.valid) {
+            if (!state.form.valid) {
                 this.addInvalidMessage("Cannot Publish with invalid or missing input.");
             }
         }
 
         this.checkSchedule();
-        if(!state.dates.validSchedule) {
+
+        if (!state.dates.validSchedule) {
             isValid = false;
             this.addInvalidMessage("Invalid schedule.");
         }
 
-        if(!state.form.valid || !isValid) {
+        if (!state.form.valid || !isValid) {
             return false;
         }
 

@@ -6,7 +6,7 @@ import db from "../lib/firebase";
 import valid from "../lib/valid-auth";
 import prefix from "../lib/prefix";
 
-import * as layout from "./layout/index";
+import layout, { layoutCss } from "./layout";
 
 import css from "./login.css";
 
@@ -15,89 +15,94 @@ function loginRedirect() {
         window.encodeURIComponent(join(window.location.origin, root, "/login"));
 }
 
-export function controller() {
-    /* eslint consistent-return: off */
-    var ctrl = this;
+export default {
+    oninit() {
+        const authParam = m.route.param("auth");
 
-    if(config.auth === "jwt") {
-        if(!m.route.param("auth")) {
-            return loginRedirect();
-        }
-
-        return db.authWithCustomToken(m.route.param("auth"), function(error) {
-            if(error) {
-                console.log(error);
-
+        if (config.auth === "jwt") {
+            if (!authParam) {
                 return loginRedirect();
             }
 
-            return m.route(prefix("/"));
-        });
-    }
+            return db.authWithCustomToken(authParam, error => {
+                if (error) {
+                    console.log(error);
 
-    if(!config.auth || valid()) {
-        return m.route(prefix("/"));
-    }
+                    return loginRedirect();
+                }
 
-    ctrl.onsubmit = function(e) {
-        var form = e.target.elements;
+                return m.route.set(prefix("/"));
+            });
+        }
+
+        if (!config.auth || valid()) {
+            return m.route.set(prefix("/"));
+        }
+
+        if (config.auth !== "password") {
+            db.authWithOAuthRedirect(config.auth);
+        }
+    },
+
+    onsubmit(e) {
+        const form = e.target.elements;
 
         e.preventDefault();
 
         db.authWithPassword({
             email    : form.email.value,
             password : form.password.value
-        }, function(error) {
-            if(error) {
-                ctrl.error = error.message;
+        }, error => {
+            if (error) {
+                this.error = error.message;
 
                 return m.redraw();
             }
 
-            return m.route(prefix("/"));
+            return m.route.set(prefix("/"));
         });
-    };
+    },
 
-    if(config.auth !== "password") {
-        db.authWithOAuthRedirect(config.auth);
-    }
-}
+    view(vnode) {
+        const { error } = vnode.state;
 
-export function view(ctrl) {
-    if(config.auth === "jwt") {
-        if(m.route.param("auth")) {
-            return m.component(layout, {
-                content : m("div", { class : layout.css.content },
-                    m("p", "Validating credentials...")
+        if (config.auth === "jwt") {
+            if (m.route.param("auth")) {
+                return m(layout,
+                    m("div", { class : layoutCss.content },
+                        m("p", "Validating credentials...")
+                    )
+                );
+            }
+
+            return m(layout,
+                m("div", { class : layoutCss.content },
+                    m("p", "Redirecting to login...")
                 )
-            });
+            );
         }
 
-        return m.component(layout, {
-            content : m("div", { class : layout.css.content },
-                m("p", "Redirecting to login...")
+        return m(layout, { title : "Login" },
+            m("div", { class : layoutCss.content },
+                m("div", { class : layoutCss.body },
+                    m("form", {
+                            class    : css.form,
+                            onsubmit : vnode.state.onsubmit
+                        },
+                        m("p",
+                            m("label", { class : css.label }, "Email"),
+                            m("input", { name : "email", type : "email" })
+                        ),
+                        m("p",
+                            m("label", { class : css.label }, "Password"),
+                            m("input", { name : "password", type : "password" })
+                        ),
+                        m("button", { class : css.button, type : "submit" }, "Login")
+                    ),
+
+                    m("p", { class : css.error }, error ? `ERROR: ${error}` : null)
+                )
             )
-        });
+        );
     }
-
-    return m.component(layout, {
-        title   : "Login",
-        content : m("div", { class : layout.css.content },
-            m("div", { class : layout.css.body },
-                m("form", { class : css.form, onsubmit : ctrl.onsubmit },
-                    m("p",
-                        m("label", { class : css.label }, "Email"),
-                        m("input", { name : "email", type : "email" })
-                    ),
-                    m("p",
-                        m("label", { class : css.label }, "Password"),
-                        m("input", { name : "password", type : "password" })
-                    ),
-                    m("button", { class : css.button, type : "submit" }, "Login")
-                ),
-
-                m("p", { class : css.error }, ctrl.error ? "ERROR: " + ctrl.error : null)
-            )
-        )
-    });
-}
+};

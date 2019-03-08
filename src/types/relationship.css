@@ -1,4 +1,4 @@
-@import "../../node_modules/awesomplete/awesomplete.css";
+@import "awesomplete/awesomplete.css";
 
 @value buttons_css: "../buttons.css";
 @value icons_css: "../icons.css";

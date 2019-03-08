@@ -9,98 +9,95 @@ import db from "../../lib/firebase.js";
 import watch from "../../lib/watch.js";
 import prefix from "../../lib/prefix.js";
 
-import * as layout from "../layout/index.js";
-import * as head from "./head.js";
-import * as formView from "./form.js";
+import layout, { layoutCss } from "../layout/index.js";
+import head from "./head.js";
+import form from "./form.js";
 
-import Content from "./content-state.js";
+import Content from "./Content.js";
 
-import css from "./form.css";
+export default {
+    oninit(vnode) { // eslint-disable-line max-statements
+        const id         = m.route.param("id");
+        const schemaRef  = db.child(`schemas/${m.route.param("schema")}`);
+        const contentRef = db.child(`content/${m.route.param("schema")}/${id}`);
 
-export function controller() {
-    var ctrl = this,
+        let content;
 
-        id     = m.route.param("id"),
-        schema = db.child("schemas/" + m.route.param("schema")),
-        ref    = db.child("content/" + m.route.param("schema") + "/" + id),
+        // Ensure we have no lingering event listeners.
+        schemaRef.off();
+        contentRef.off();
 
-        content;
+        vnode.state.id         = id;
+        vnode.state.contentRef = contentRef;
+        vnode.state.form       = null;
+        vnode.state.data       = {};
+        vnode.state.hidden     = [];
+        vnode.state.loading    = true;
 
-    // Ensure we have no lingering event listeners.
-    schema.off();
-    ref.off();
+        // New state for every page change.
+        vnode.state.content = content = new Content();
 
-    ctrl.id     = id;
-    ctrl.ref    = ref;
-    ctrl.form   = null;
-    ctrl.data   = {};
-    ctrl.hidden = [];
-    ctrl.loading = true;
-
-    // New state for every page change.
-    ctrl.content = content = new Content();
-
-    // No sense doing any work if we don't have an id to operate on
-    if(!id) {
-        return;
-    }
-
-    schema.on("value", function(snap) {
-        content.setSchema(snap.val(), snap.key());
-
-        m.redraw();
-    });
-
-
-    // On updates from firebase we need to merge in fields carefully
-    ref.on("value", function(snap) {
-        var data = snap.val(),
-            state = content.get();
-
-        // Don't try to grab non-existent data
-        if(!snap.exists()) {
-            return m.route(prefix("/listing/" + m.route.param("schema")));
+        // No sense doing any work if we don't have an id to operate on
+        if (!id) {
+            return;
         }
 
-        content.processServerData(data, ref);
+        // if the schema for the post currently being edited is updated, we want to update the post fields
+        schemaRef.on("value", snap => {
+            content.setSchema(snap.val(), snap.key());
 
-        ctrl.data = assign(data, {
-            fields : merge(data.fields, state.fields)
+            m.redraw();
         });
 
-        ctrl.loading = false;
 
-        return m.redraw();
-    });
+        // On updates from firebase we need to merge in fields carefully
+        contentRef.on("value", snap => {
+            const data  = snap.val();
+            const state = content.get();
 
-    watch(ref);
-}
+            // Don't try to grab non-existent data
+            if (!snap.exists()) {
+                return m.route.set(prefix(`/${m.route.param("schema")}`));
+            }
 
-export function view(ctrl) {
-    var state = ctrl.content.get(),
-        title;
+            content.mergeServerContent(data, contentRef);
 
-    if(!state.schema) {
-        return m.component(layout, { loading : true });
-    }
+            vnode.state.data = assign(data, {
+                fields : merge(data.fields, state.fields)
+            });
 
-    title = [ get(state.meta, "name"), get(state.schema, "name") ]
-        .filter(Boolean)
-        .map(capitalize)
-        .join(" | ");
+            vnode.state.loading = false;
 
-    if(!ctrl.id) {
-        m.route(prefix("/listing/" + state.schema.key));
-    }
+            return m.redraw();
+        });
 
-    return m.component(layout, {
-        title   : title,
-        loading : ctrl.loading,
-        content : [
-            m("div", { class : layout.css.content },
-                m.component(head,     { content : ctrl.content }),
-                m.component(formView, { content : ctrl.content })
+        watch(contentRef);
+    },
+
+    view(vnode) {
+        const { content, id, loading } = vnode.state;
+        const state = content.get();
+
+        let title;
+
+        if (!state.schema) {
+            return m(layout, { loading : true });
+        }
+
+        title = [ get(state.meta, "name"), get(state.schema, "name") ]
+            .filter(Boolean)
+            .map(capitalize)
+            .join(" | ");
+
+        if (!id) {
+            m.route.set(prefix(`/${state.schema.key}`));
+        }
+
+        return m(layout, { title, loading },
+            m("div", { class : layoutCss.content },
+                m(head, { content }),
+                m(form, { content })
             )
-        ]
-    });
-}
+        );
+    }
+};

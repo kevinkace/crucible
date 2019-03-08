@@ -9,62 +9,54 @@ import addClasses from "./lib/classer.js";
 import css from "./lib/types.css";
 
 // Bound below
-var types;
+let types;
 
-export function view(ctrl, options) {
-    var content = options.content,
-        fields = options.fields || [],
-        registerHidden = options.registerHidden,
-        mFields = [];
+export default {
+    view(vnode) {
+        const { content, fields = [], registerHidden, state, data, path, class : style } = vnode.attrs;
 
-    mFields = fields.map(function(field, index) {
-        var component,
-            wasHidden,
-            isHidden,
-            result;
+        return m("div", { class : style ? style : "" },
+            fields.map((field, index) => {
+                const component = types[field.type || field];
 
-        component = types[field.type || field];
+                let wasHidden,
+                    isHidden;
 
-        if(!component) {
-            return m("div",
-                m("p", "Unknown component"),
-                m("pre", JSON.stringify(field, null, 4))
-            );
-        }
+                if (!component) {
+                    return m("div",
+                        m("p", "Unknown component"),
+                        m("pre", JSON.stringify(field, null, 4))
+                    );
+                }
 
-        if(field.show) {
-            wasHidden = field.show.hidden;
-            field.show.hidden = checkHidden(options.state, field);
+                if (field.show) {
+                    wasHidden = field.show.hidden;
+                    field.show.hidden = checkHidden(state, field);
 
-            if(field.show.hidden !== wasHidden) {
-                // hidden status changed, notify the controller.
-                registerHidden(field.key, field.show.hidden);
-                m.redraw();
-            }
-        }
+                    if (field.show.hidden !== wasHidden) {
+                        // hidden status changed, notify the controller.
+                        registerHidden(field.key, field.show.hidden);
+                        m.redraw();
+                    }
+                }
 
-        isHidden = get(field, "show.hidden");
+                isHidden = get(field, "show.hidden");
 
-        result = m.component(component, assign({}, options, {
-            field   : field,
-            content : content,
-            update  : content.setField.bind(content),
+                return m(component, assign({}, vnode.attrs, {
+                    field   : field,
+                    content : content,
+                    update  : content.setField.bind(content),
 
-            class : addClasses(field, css[index ? "field" : "first"]),
-            data  : get(options.data, field.key),
-            path  : options.path.concat(field.key),
+                    class : addClasses(field, index ? css.field : css.first),
+                    data  : get(data, field.key),
+                    path  : path.concat(field.key),
 
-            required : !isHidden && field.required
-        }));
-
-
-        return result;
-    });
-
-    return m("div", options.class ? { class : options.class } : null,
-        mFields
-    );
-}
+                    required : !isHidden && field.required
+                }));
+            })
+        );
+    }
+};
 
 // Structural
 import fieldset from "./fieldset.js";
@@ -89,24 +81,24 @@ import checkbox from "./checkbox.js";
 // Have to bind these down here to avoid circular binding issues
 types = {
     // Structural
-    fieldset  : fieldset,
-    repeating : repeating,
-    split     : split,
-    tabs      : tabs,
+    fieldset,
+    repeating,
+    split,
+    tabs,
 
     // Non-input fields
-    instructions : instructions,
-    
+    instructions,
+
     // Custom input types
-    relationship : relationship,
-    markdown     : markdown,
-    textarea     : textarea,
-    upload       : upload,
-    
+    relationship,
+    markdown,
+    textarea,
+    upload,
+
     // Implementations based on lib/multiple.js
-    select   : select,
-    radio    : radio,
-    checkbox : checkbox,
+    select,
+    radio,
+    checkbox,
 
     // Implementations based on lib/input.js
     date     : input("date"),

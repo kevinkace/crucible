@@ -1,4 +1,4 @@
-@import "../../../node_modules/codemirror/lib/codemirror.css";
+@import "codemirror/lib/codemirror.css";
 
 @value layout_css:  "../layout/layout.css";
 @value flex_css: "../../flex.css";

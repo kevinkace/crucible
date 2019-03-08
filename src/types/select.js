@@ -4,37 +4,32 @@ import assign from "lodash.assign";
 import css from "./select.css";
 import multiple from "./lib/multiple.js";
 
-export default multiple({
-        multiple : false
-    },
-
-    function(ctrl, options, children) {
-        var field = options.field;
-
+export default multiple({ multiple : false },
+    (state, attrs, children) => {
+        const { field, required } = attrs;
 
         return m("select", assign({
-                // attrs
-                name     : field.name,
-                class    : css.select,
-                required : options.required,
+                    name  : field.name,
+                    class : css.select,
+                    required,
 
-                // events
-                onchange : function(e) {
-                    var tgt = e.target,
-                        opt = children[tgt.selectedIndex];
+                    onchange(e) {
+                        const { key, value } = children[e.target.selectedIndex];
 
-                    ctrl.value(options, opt.key, opt.value);
-                }
-            }, field.attrs),
-            
-            children.map(function(option) {
-                return m("option", assign({}, option.attrs, {
+                        state.value(attrs, key, value);
+                    }
+                },
+                field.attrs
+            ),
+
+            children.map(option =>
+                m("option", assign({}, option.attrs, {
                         value    : option.value,
                         selected : option.selected ? "selected" : null
                     }),
                     option.name
-                );
-            })
+                )
+            )
         );
     }
 );

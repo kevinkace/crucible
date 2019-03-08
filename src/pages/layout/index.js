@@ -1,6 +1,6 @@
 import m from "mithril";
 
-import config, { title } from "../../config";
+import config, { title as siteTitle } from "../../config";
 import db from "../../lib/firebase";
 import auth from "../../lib/valid-auth";
 import prefix from "../../lib/prefix";
@@ -10,96 +10,86 @@ import layout from "./layout.css";
 import loading from "./loading.css";
 
 // exporting so others can use it more easily
-export { layout as css };
+export { layout as layoutCss };
 
-export function controller() {
-    var ctrl = this;
+export default {
+    oninit(vnode) {
+        vnode.state.schemas = [];
+        vnode.state.auth = auth();
 
-    ctrl.schemas = null;
-    ctrl.auth = auth();
+        db.child("schemas").on("value", snap => {
+            vnode.state.schemas = [];
 
-    ctrl.add = function() {
-        m.route(prefix("/content/new"));
-    };
+            snap.forEach(schema => {
+                const val = schema.val();
 
-    db.child("schemas").on("value", function(snap) {
-        ctrl.schemas = [];
+                val.key = schema.key();
 
-        snap.forEach(function(schema) {
-            var val = schema.val();
+                vnode.state.schemas.push(val);
+            });
 
-            val.key = schema.key();
-
-            ctrl.schemas.push(val);
+            m.redraw();
         });
+    },
 
-        m.redraw();
-    });
-}
+    view(vnode) {
+        const locked      = config.locked;
+        const schemaParam = m.route.param("schema");
 
-export function view(ctrl, options) {
-    var current = m.route(),
-        locked  = config.locked;
+        const { schemas, auth : _auth } = vnode.state;
+        const { title = "Loading...", loading : _loading } = vnode.attrs;
 
-    if(!options) {
-        options = false;
-    }
+        document.title = `${title} | ${siteTitle}`;
 
-    document.title = (options.title || "Loading...") + " | " + title;
+        return m("div", { class : layout.container },
 
-    return m("div", { class : layout.container },
-        options && options.loading ?
-            m("div", { class : loading.bar }) :
-            null,
+            _loading ?
+                m("div", { class : loading.bar }) :
+                null,
 
-        m("div", { class : header.header },
+            m("div", { class : header.header },
 
-            m("a", {
-                    class  : header.headerHd,
-                    href   : prefix("/"),
-                    config : m.route
-                },
-                m("h1", { class : header.title }, title)
+                m("a", {
+                        class    : header.headerHd,
+                        href     : prefix("/"),
+                        oncreate : m.route.link
+                    },
+                    m("h1", { class : header.title }, siteTitle)
+                ),
+
+                m("div", { class : header.headerBd },
+                    _auth ?
+                        [
+                            m("div", { class : header.schemas },
+                                schemas.map(schema =>
+                                    m("a", {
+                                            class    : schemaParam === schema.key ? header.active : header.schema,
+                                            href     : prefix(`/${schema.key}`),
+                                            oncreate : m.route.link
+                                        },
+                                        schema.name
+                                    )
+                                )
+                            ),
+
+                            !locked ?
+                                m("a", {
+                                    class    : header.add,
+                                    href     : prefix("/new-schema"),
+                                    oncreate : m.route.link
+                                }, "New Schema") :
+                                null,
+
+                            m("a", {
+                                class    : header.logout,
+                                href     : prefix("/logout"),
+                                oncreate : m.route.link
+                            }, "Logout")
+                        ] :
+                        null
+                )
             ),
-
-            m("div", { class : header.headerBd },
-                ctrl.auth ? [
-                    m("div", { class : header.schemas },
-                        (ctrl.schemas || []).map(function(schema) {
-                            var searchUrl = prefix("/content/" + schema.key),
-                                targetUrl = prefix("/listing/" + schema.key),
-                                active;
-
-                            active = current.indexOf(searchUrl) === 0 || current.indexOf(targetUrl) === 0;
-
-                            return m("a", {
-                                    class  : header[active ? "active" : "schema"],
-                                    href   : targetUrl,
-                                    config : m.route
-                                },
-                                schema.name
-                            );
-                        })
-                    ),
-
-                    m("button", {
-                        // Attrs
-                        class    : header.add,
-                        disabled : locked || null,
-
-                        // Events
-                        onclick : ctrl.add
-                    }, "New Schema"),
-
-                    m("a", {
-                        class  : header.logout,
-                        href   : prefix("/logout"),
-                        config : m.route
-                    }, "Logout")
-                ] :
-                null
-            )
-        ),
-        options.content ? options.content : null
-    );
-}
+            vnode.children ? vnode.children : null
+        );
+    }
+};

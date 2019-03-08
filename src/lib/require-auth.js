@@ -6,15 +6,15 @@ import prefix from "./prefix";
 
 export default function(component) {
     return {
-        controller : function() {
+        oninit() {
             /* eslint consistent-return: 0 */
-            if(config.auth && !valid()) {
-                return m.route(prefix("/login") + window.location.search);
+            if (config.auth && !valid()) {
+                return m.route.set(`${prefix("/login")}${window.location.search}`);
             }
         },
 
-        view : function() {
-            return m.component(component);
+        view() {
+            return m(component);
         }
     };
 }

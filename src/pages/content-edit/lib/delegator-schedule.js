@@ -15,46 +15,46 @@ Schedule.prototype = {
         UNPUBLISHED : "unpublished"
     },
 
-    dirty : function() {
-        var state = this.content.get();
+    dirty() {
+        const state = this.content.get();
 
         state.meta.dirty = true;
     },
 
-    unpublish : function() {
-        var state = this.content.get(),
-            pub   = state.dates.published_at,
-            unpub = Date.now();
+    unpublish() {
+        const state = this.content.get();
+        const pub   = state.dates.published_at;
+        const unpub = Date.now();
 
         this.dirty();
         this.setDateField("unpublished", unpub);
 
-        if(unpub < pub) {
+        if (unpub < pub) {
             this.setDateField("published", null);
         }
 
         this.content.save();
     },
 
-    publish : function() {
-        var state = this.content.get(),
-            pub   = Date.now(),
-            unpub = state.dates.unpublished_at;
+    publish() {
+        const state = this.content.get();
+        const pub   = Date.now();
+        const unpub = state.dates.unpublished_at;
 
         this.dirty();
         this.setDateField("published", pub);
-        
-        if(unpub < pub) {
+
+        if (unpub < pub) {
             this.setDateField("unpublished", null);
         }
 
         this.content.save();
     },
 
-    setDateField : function(key, ts) {
-        var state = this.content.get(),
-            atKey = key + "_at",
-            byKey = key + "_by";
+    setDateField(key, ts) {
+        const state = this.content.get();
+        const atKey = `${key}_at`;
+        const byKey = `${key}_by`;
 
         this.dirty();
 
@@ -65,12 +65,12 @@ Schedule.prototype = {
         this.content.validity.checkSchedule();
     },
 
-    clearSchedule : function() {
-        var state = this.content.get();
-            
+    clearSchedule() {
+        let state = this.content.get();
+
         this.dirty();
 
-        state = merge(state, {
+        merge(state, {
             user : {
                 published_by   : null,
                 unpublished_by : null
@@ -84,24 +84,25 @@ Schedule.prototype = {
 
         this.content.validity.checkSchedule();
     },
-    
-    updateStatus : function() {
-        var state  = this.content.get(),
-            pub    = state.dates.published_at,
-            unpub  = state.dates.unpublished_at,
-            status = this.STATUS.DRAFT;
 
-        if(!pub) {
+    updateStatus() {
+        const state  = this.content.get();
+        const pub    = state.dates.published_at;
+        const unpub  = state.dates.unpublished_at;
+
+        let status = this.STATUS.DRAFT;
+
+        if (!pub) {
             state.meta.status = status;
 
             return;
         }
 
-        if(unpub && isPast(unpub)) {
+        if (unpub && isPast(unpub)) {
             status = this.STATUS.UNPUBLISHED;
-        } else if(pub && isFuture(pub)) {
+        } else if (pub && isFuture(pub)) {
             status = this.STATUS.SCHEDULED;
-        } else if(pub && isPast(pub)) {
+        } else if (pub && isPast(pub)) {
             status = this.STATUS.PUBLISHED;
         }
 

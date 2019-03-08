@@ -9,58 +9,51 @@ import "codemirror/addon/edit/closebrackets";
 import "codemirror/addon/selection/active-line";
 import "codemirror/addon/comment/continuecomment";
 
-export function controller(options) {
-    var ctrl = this;
-    
-    // Set up codemirror
-    ctrl.editorSetup = function(el, init) {
-        if(init) {
-            return;
-        }
+export default {
+    view(vnode) {
+        const { ref, worker, source } = vnode.attrs;
 
-        ctrl.editor = editor.fromTextArea(el, {
-            mode : "application/javascript",
-            lint : true,
+        return m("textarea", {
+                oncreate({ dom }) {
+                    vnode.state.editor = editor.fromTextArea(dom, {
+                        mode : "application/javascript",
+                        lint : true,
 
-            indentUnit   : 4,
-            smartIndent  : false,
-            lineNumbers  : true,
-            lineWrapping : true,
+                        indentUnit   : 4,
+                        smartIndent  : false,
+                        lineNumbers  : true,
+                        lineWrapping : true,
 
-            // Plugin options
-            styleActiveLine  : true,
-            continueComments : true,
+                        // Plugin options
+                        styleActiveLine  : true,
+                        continueComments : true,
 
-            autoCloseBrackets : true,
-            matchBrackets     : true,
+                        autoCloseBrackets : true,
+                        matchBrackets     : true,
 
-            extraKeys : {
-                Tab : function(cm) {
-                    if(cm.somethingSelected()) {
-                        return cm.indentSelection("add");
-                    }
+                        extraKeys : {
+                            Tab(cm) {
+                                return cm.somethingSelected() ?
+                                    cm.indentSelection("add") :
+                                    cm.execCommand(cm.options.indentWithTabs ? "insertTab" : "insertSoftTab");
+                            },
 
-                    return cm.execCommand(cm.options.indentWithTabs ? "insertTab" : "insertSoftTab");
-                },
+                            "Shift-Tab"(cm) {
+                                cm.indentSelection("subtract");
+                            }
+                        }
+                    });
 
-                "Shift-Tab" : function(cm) {
-                    cm.indentSelection("subtract");
+                    vnode.state.editor.on("changes", debounce(() => {
+                        const text = vnode.state.editor.doc.getValue();
+
+                        ref.child("source").set(text);
+
+                        worker.postMessage(text);
+                    }, 500, { maxWait : 5000 }));
                 }
-            }
-        });
-
-        ctrl.editor.on("changes", debounce(function() {
-            var text = ctrl.editor.doc.getValue();
-
-            options.ref.child("source").set(text);
-            
-            options.worker.postMessage(text);
-        }, 500, { maxWait : 5000 }));
-    };
-}
-
-export function view(ctrl, options) {
-    return m("textarea", { config : ctrl.editorSetup },
-        options.source
-    );
-}
+            },
+            source
+        );
+    }
+};

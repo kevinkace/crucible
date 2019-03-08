@@ -1,7 +1,7 @@
 import clone from "lodash.clone";
 
 export function toState(data) {
-    var result = {
+    const result = {
         meta : {
             name : data.name,
             slug : data.slug
@@ -31,14 +31,14 @@ export function toState(data) {
 
 
 function filterHidden(fields, hidden) {
-    // People can hide/unhide a field without losing work.
+    // People can hide/show a field without losing work.
     // But we don't want to persist data from hidden fields,
-    // so overwrite the data to be saved, but clone the 
+    // so overwrite the data to be saved, but clone the
     // source data so we do not modify the form's data.
-    var filtered = clone(fields);
+    const filtered = clone(fields);
 
-    Object.keys(filtered).forEach(function(key) {
-        if(hidden.indexOf(key) > -1) {
+    Object.keys(filtered).forEach(key => {
+        if (hidden.indexOf(key) > -1) {
             filtered[key] = null;
         }
     });
@@ -47,9 +47,7 @@ function filterHidden(fields, hidden) {
 }
 
 export function fromState(state) {
-    var dates = state.dates,
-        user  = state.user,
-        meta  = state.meta;
+    const { dates, user, meta } = state;
 
     return {
         name : meta.name,

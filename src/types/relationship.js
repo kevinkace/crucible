@@ -1,159 +1,166 @@
 import m from "mithril";
 import assign from "lodash.assign";
-import Awesomeplete from "awesomplete";
+import Awesomplete from "awesomplete";
 
 import db from "../lib/firebase";
 
-import id from "./lib/id";
+import getId from "./lib/getId";
 import label from "./lib/label";
 import types from "./lib/types.css";
+import css from "./relationship.css";
 
 import removeIcon from "../icons/remove.svg";
 
-import css from "./relationship.css";
-
 export default {
-    controller : function(options) {
-        var ctrl    = this,
-            schema  = options.field.schema,
-            content = db.child("content/" + schema);
+    oninit(vnode) {
+        const schema  = vnode.attrs.field.schema;
 
-        ctrl.id      = id(options);
-        ctrl.lookup  = null;
-        ctrl.handle  = null;
-        ctrl.related = null;
-        ctrl.names   = [];
-        ctrl.baseUrl = "content/" + schema + "/";
+        vnode.state.content = db.child(`content/${schema}`);
+        vnode.state.id      = getId(vnode.attrs);
+        vnode.state.lookup  = null;
+        vnode.state.handle  = null;
+        vnode.state.related = null;
+        vnode.state.names   = [];
+        vnode.state.baseUrl = `content/${schema}/`;
 
-        ctrl.options = options;
+        vnode.state.options = vnode.attrs;
 
-        ctrl.config = function(el, init) {
-            if(init) {
-                return;
-            }
-
-            ctrl.autocomplete = new Awesomeplete(el, {
-                minChars  : 3,
-                maxItems  : 10,
-                autoFirst : true
-            });
-
-            ctrl.input = el;
-
-            el.addEventListener("awesomplete-selectcomplete", ctrl.add);
-
-            ctrl.autocomplete.list = ctrl.names;
-
-            ctrl.load();
-        };
-
-        ctrl.load = function() {
-            if(ctrl.handle) {
-                return;
-            }
-
-            ctrl.handle = content.on("value", function(snap) {
-                ctrl.lookup  = {};
-                ctrl.related = snap.val();
-                ctrl.names   = [];
-
-                snap.forEach(function(details) {
-                    var val = details.val();
-
-                    ctrl.names.push(val.name);
-
-                    ctrl.lookup[val.name] = details.key();
-                });
-
-                if(ctrl.autocomplete) {
-                    ctrl.autocomplete.list = ctrl.names;
-                    ctrl.autocomplete.evaluate();
-                }
-
-                m.redraw();
-            });
-        };
-
-        // Set up a two-way relationship between these
-        ctrl.add = function(e) {
-            var key = ctrl.lookup[e.target.value];
-
-            if(!key) {
-                console.error(e.target.value);
-
-                return;
-            }
-
-            e.target.value = "";
-
-            ctrl.options.update(ctrl.options.path.concat(key), true);
-
-            if(ctrl.options.root) {
-                content.child(key + "/relationships/" + ctrl.options.root.key()).set(true);
-            }
-        };
-
-        // BREAK THE RELATIONSHIP
-        ctrl.remove = function(key, e) {
-            e.preventDefault();
-
-            ctrl.options.update(ctrl.options.path.concat(key));
-
-            if(ctrl.options.root) {
-                content.child(key + "/relationships/" + ctrl.options.root.key()).remove();
-            }
-        };
-
-        if(options.data) {
-            ctrl.load();
+        if (vnode.attrs.data) {
+            vnode.state.load();
         }
     },
 
-    view : function(ctrl, options) {
-        var field  = options.field;
+    config(dom) {
+        this.autocomplete = new Awesomplete(dom, {
+            minChars  : 3,
+            maxItems  : 10,
+            autoFirst : true
+        });
 
-        ctrl.options = options;
+        this.input = dom;
 
-        return m("div", { class : options.class },
-            label(ctrl, options),
+        dom.addEventListener("awesomplete-selectcomplete", (value) => {
+            this.add(value);
+        });
+
+        this.autocomplete.list = this.names;
+
+        this.load();
+    },
+
+    load() {
+        const { content, handle, autocomplete } = this;
+
+        if (handle) {
+            return;
+        }
+
+        this.handle = content.on("value", snap => {
+            this.lookup  = {};
+            this.related = snap.val();
+            this.names   = [];
+
+            snap.forEach(details => {
+                const val = details.val();
+
+                this.names.push(val.name);
+
+                this.lookup[val.name] = details.key();
+            });
+
+            if (autocomplete) {
+                autocomplete.list = this.names;
+                autocomplete.evaluate();
+            }
+
+            m.redraw();
+        });
+    },
+
+    // Set up a two-way relationship between these
+    add(e) {
+        const { options, content } = this;
+        const key = this.lookup[e.target.value];
+
+        if (!key) {
+            console.error(e.target.value);
+
+            return;
+        }
+
+        e.target.value = "";
+
+        options.update(options.path.concat(key), true);
+
+        if (options.root) {
+            content.child(`${key}/relationships/${options.root.key()}`).set(true);
+        }
+    },
+
+    // BREAK THE RELATIONSHIP
+    remove(key, e) {
+        const { options, content } = this;
+
+        e.preventDefault();
+
+        options.update(options.path.concat(key));
+
+        if (options.root) {
+            content.child(`${key}/relationships/${options.root.key()}`).remove();
+        }
+    },
+
+    view(vnode) {
+        const { id, autocomplete, related, baseUrl } = vnode.state;
+        const { field, class : style, data } = vnode.attrs;
+
+        return m("div", { class : style },
+            m(label, { id, field }),
             m("input", assign(field.attrs || {}, {
-                // Attrs
-                id     : ctrl.id,
-                class  : types.relationship,
-                config : ctrl.config,
+                id,
+                class : types.relationship,
 
-                // Events
-                onkeydown : function(e) {
-                    if(e.keyCode !== 9 || ctrl.autocomplete.opened === false) {
+                oncreate({ dom }) {
+                    vnode.state.config(dom);
+                },
+
+                onkeydown(e) {
+                    if (e.keyCode !== 9 || autocomplete.opened === false) {
                         return;
                     }
 
-                    ctrl.autocomplete.select();
+                    autocomplete.select();
                 }
             })),
             m("ul", { class : css.relationships },
-                options.data && Object.keys(options.data).map(function(key) {
-                    return m("li", { class : css.li },
-                        ctrl.related ?
-                            m("div", { class : css.relationship },
+                data ?
+                    Object.keys(data).map(key =>
+                        m("li", { class : css.li },
+                            related ?
+                                m("div", { class : css.relationship },
                                     m("a", {
-                                        href  : ctrl.baseUrl + key,
-                                        class : css.link
-                                    }, ctrl.related[key].name),
-                                m("div", { class : css.actions },
-                                    m("button", {
-                                            class   : css.button,
-                                            onclick : ctrl.remove.bind(ctrl, key),
-                                            title   : "Remove",
-                                            value   : "Remove"
+                                            href  : `${baseUrl}${key}`,
+                                            class : css.link
                                         },
-                                        m.trust(removeIcon)
+                                        related[key].name
+                                    ),
+                                    m("div", { class : css.actions },
+                                        m("button", {
+                                                class : css.button,
+                                                title : "Remove",
+                                                value : "Remove",
+                                                onclick(e) {
+                                                    vnode.state.remove(key, e);
+                                                }
+                                            },
+                                            m.trust(removeIcon)
+                                        )
                                     )
-                                )
-                            ) :
-                            "Loading..."
-                    );
-                })
+                                ) :
+                                "Loading..."
+                        )
+                    ) :
+                    null
             )
         );
     }

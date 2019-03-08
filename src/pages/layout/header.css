@@ -6,12 +6,13 @@
 @value color_hover: #346;
 
 @value sm, md, lg from "../../shared.css";
+@value pad from layout_css;
 
 .header {
     composes: vbox from flex_css;
-    
-    flex: 0 1 320px;
-    min-width: 180px;
+
+    flex: 0 1 auto;
+    min-width: 200px;
     z-index: 1;
 
     color: #FFF;
@@ -26,7 +27,7 @@
     composes: head from layout_css;
     composes: sep from layout_css;
 
-    /* specificify issue with head */
+    /* specificity issue with head */
     justify-content: space-around !important;
 
     font-size: 1.8em;
@@ -41,7 +42,7 @@
 .title {
     margin: 0;
 
-    font-size: 1.1em;
+    font-size: 0.9em;
     text-align: center;
 }
 
@@ -95,7 +96,7 @@
 .schema {
     composes: link;
 
-    padding: 1em 24px 1em 16px;
+    padding: 1em pad 0.8em;
     opacity: 0.5;
 }
 
